@@ -15,6 +15,13 @@ function App() {
   const [isRecording, setIsRecording] = useState(false);
   const [waypoints, setWaypoints] = useState([]);
   const [observations, setObservations] = useState([]);
+  const [showLayersMenu, setShowLayersMenu] = useState(false);
+  const [layers, setLayers] = useState({
+    flightPath: true,
+    observations: true,
+    waypoints: true
+  });
+  const [showGrid, setShowGrid] = useState(false);
 
   const loadObservations = async () => {
     if (window.electronAPI) {
@@ -58,8 +65,40 @@ function App() {
         >
           Observe
         </button>
-        <button>Layers</button>
-        <button>Grid</button>
+        <div style={{position: 'relative'}}>
+          <button 
+            onClick={() => setShowLayersMenu(!showLayersMenu)}
+            style={showLayersMenu ? { backgroundColor: 'rgba(255, 255, 255, 0.1)' } : {}}
+          >
+            Layers
+          </button>
+          {showLayersMenu && (
+            <div style={{
+              position: 'absolute', top: '100%', left: 0, backgroundColor: '#1a202c', 
+              border: '1px solid #2d3748', padding: '10px', borderRadius: '4px', 
+              zIndex: 1000, minWidth: '150px', display: 'flex', flexDirection: 'column', gap: '8px'
+            }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={layers.flightPath} onChange={e => setLayers({...layers, flightPath: e.target.checked})} />
+                Flight Path
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={layers.observations} onChange={e => setLayers({...layers, observations: e.target.checked})} />
+                Observations
+              </label>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer' }}>
+                <input type="checkbox" checked={layers.waypoints} onChange={e => setLayers({...layers, waypoints: e.target.checked})} />
+                Waypoints
+              </label>
+            </div>
+          )}
+        </div>
+        <button 
+          onClick={() => setShowGrid(!showGrid)}
+          style={showGrid ? { backgroundColor: 'rgba(99, 179, 237, 0.2)', color: '#63b3ed', borderColor: '#63b3ed' } : {}}
+        >
+          Grid
+        </button>
         <button 
           onClick={toggleRecording}
           disabled={appMode !== 'LIVE'}
@@ -115,6 +154,8 @@ function App() {
             setWaypoints={setWaypoints}
             observations={observations}
             loadObservations={loadObservations}
+            layers={layers}
+            showGrid={showGrid}
           />
         </section>
 

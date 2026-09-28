@@ -44,7 +44,7 @@ const MapInteraction = ({ appMode, waypoints, setWaypoints, loadObservations }) 
     return null;
 };
 
-const OfflineMap = ({ telemetry, appMode, waypoints = [], setWaypoints, observations = [], loadObservations }) => {
+const OfflineMap = ({ telemetry, appMode, waypoints = [], setWaypoints, observations = [], loadObservations, layers = {flightPath: true, observations: true, waypoints: true}, showGrid = false }) => {
     const mapRef = useRef();
 
     // Pan map to follow drone if telemetry updates, but only if not planning
@@ -56,7 +56,7 @@ const OfflineMap = ({ telemetry, appMode, waypoints = [], setWaypoints, observat
     }, [telemetry, appMode]);
 
     return (
-        <div className="offline-map-container">
+        <div className={`offline-map-container ${showGrid ? 'show-tactical-grid' : ''}`}>
             <div className="tactical-mode-badge" style={appMode === 'PLANNING' ? {backgroundColor: 'rgba(237, 137, 54, 0.8)', borderColor: '#ed8936', color: '#fff'} : {}}>
                 {appMode === 'PLANNING' ? 'MISSION PLANNING MODE' : 'TACTICAL GRID MODE (OFFLINE)'}
             </div>
@@ -82,20 +82,20 @@ const OfflineMap = ({ telemetry, appMode, waypoints = [], setWaypoints, observat
                 <MapInteraction appMode={appMode} waypoints={waypoints} setWaypoints={setWaypoints} loadObservations={loadObservations} />
 
                 {/* Render Mission Waypoints */}
-                {waypoints.map((wp, i) => (
-                    <Marker key={i} position={[wp.lat, wp.lng]} />
+                {layers.waypoints && waypoints.map((wp, i) => (
+                    <Marker key={`wp-${i}`} position={[wp.lat, wp.lng]} />
                 ))}
                 
-                {waypoints.length > 1 && (
+                {layers.waypoints && waypoints.length > 1 && (
                     <Polyline positions={waypoints.map(w => [w.lat, w.lng])} color="#ed8936" weight={3} />
                 )}
 
                 {/* Render Observations */}
-                {observations && observations.map((obs) => (
-                    <Marker key={obs.id} position={[obs.latitude, obs.longitude]} />
+                {layers.observations && observations && observations.map((obs) => (
+                    <Marker key={`obs-${obs.id}`} position={[obs.latitude, obs.longitude]} />
                 ))}
 
-                {appMode !== 'PLANNING' && appMode !== 'OBSERVE' && <FlightTrack currentPosition={telemetry?.position} />}
+                {layers.flightPath && appMode !== 'PLANNING' && appMode !== 'OBSERVE' && <FlightTrack currentPosition={telemetry?.position} />}
                 
                 <PlatformMarker 
                     position={telemetry?.position} 
