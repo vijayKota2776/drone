@@ -1,0 +1,32 @@
+{
+  "name": "drone",
+  "version": "1.0.0",
+  "description": "````markdown # Offline ISR Drone Feed & Geospatial COP",
+  "main": "electron/main.js",
+  "directories": {
+    "doc": "docs"
+  },
+  "scripts": {
+    "start": "cross-env NODE_ENV=production electron .",
+    "dev": "cross-env NODE_ENV=development concurrently \"cd client && npm run dev\" \"wait-on tcp:5173 && electron .\"",
+    "build": "cd client && npm run build && cd .. && electron-builder",
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "commonjs",
+  "devDependencies": {
+    "concurrently": "^10.0.5",
+    "cross-env": "^10.1.0",
+    "electron": "^44.4.4",
+    "electron-builder": "^26.15.3",
+    "wait-on": "^9.1.0"
+  },
+  "dependencies": {
+    "better-sqlite3": "^13.0.3",
+    "mgrs": "^2.2.0",
+    "node-mavlink": "^2.3.0",
+    "serialport": "^13.0.0"
+  }
+}

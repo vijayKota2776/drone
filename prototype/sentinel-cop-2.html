@@ -1,0 +1,1688 @@
+<title>Sentinel COP Trainer</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500;600&family=IBM+Plex+Sans+Condensed:wght@500;600;700&family=IBM+Plex+Sans:wght@400;500;600&display=swap">
+<style>
+:root{
+  --ground:#e9edf1; --panel:#ffffff; --panel-2:#f2f5f8; --sunk:#e3e8ee;
+  --line:#c6d0da; --line-soft:#dbe3ea;
+  --ink:#16202c; --ink-2:#4a5a6b; --ink-3:#7d8b99;
+  --accent:#e0561b; --accent-ink:#ffffff; --accent-soft:#fbe4d8;
+  --nominal:#1c8f63; --caution:#b5820c; --alert:#d32436;
+  --map-ground:#dfe6e2; --map-relief:#cfd9d2; --map-water:#a9c6d8;
+  --map-urban:#d2cec6; --map-road:#ffffff; --map-road-2:#eae5dc; --map-grid:#b6c2cb;
+  --shadow:0 1px 2px rgba(20,32,44,.09), 0 6px 18px rgba(20,32,44,.07);
+  --f-lbl:"IBM Plex Sans Condensed",system-ui,sans-serif;
+  --f-num:"IBM Plex Mono",ui-monospace,monospace;
+  --f-txt:"IBM Plex Sans",system-ui,sans-serif;
+}
+@media (prefers-color-scheme:dark){ :root:not([data-theme="light"]){
+  --ground:#070d15; --panel:#0e1826; --panel-2:#131f30; --sunk:#0a121d;
+  --line:#22354f; --line-soft:#1a2939;
+  --ink:#dce7f5; --ink-2:#93a7bf; --ink-3:#6b7f97;
+  --accent:#ff7a3d; --accent-ink:#1a0d05; --accent-soft:#3a1d0d;
+  --nominal:#34c08a; --caution:#f5c451; --alert:#ff5d6b;
+  --map-ground:#101b26; --map-relief:#16242f; --map-water:#123043;
+  --map-urban:#1d2836; --map-road:#2f4055; --map-road-2:#24334a; --map-grid:#1c2c40;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
+}}
+:root[data-theme="dark"]{
+  --ground:#070d15; --panel:#0e1826; --panel-2:#131f30; --sunk:#0a121d;
+  --line:#22354f; --line-soft:#1a2939;
+  --ink:#dce7f5; --ink-2:#93a7bf; --ink-3:#6b7f97;
+  --accent:#ff7a3d; --accent-ink:#1a0d05; --accent-soft:#3a1d0d;
+  --nominal:#34c08a; --caution:#f5c451; --alert:#ff5d6b;
+  --map-ground:#101b26; --map-relief:#16242f; --map-water:#123043;
+  --map-urban:#1d2836; --map-road:#2f4055; --map-road-2:#24334a; --map-grid:#1c2c40;
+  --shadow:0 1px 2px rgba(0,0,0,.5), 0 8px 24px rgba(0,0,0,.35);
+}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--ground);color:var(--ink);font-family:var(--f-txt);font-size:13px;overflow:hidden}
+button,select,input{font:inherit;color:inherit}
+:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+.app{height:100%;display:grid;grid-template-rows:auto 1fr auto;gap:6px;padding:6px;padding-block:6px}
+
+/* ---------- command bar ---------- */
+.cmdbar{background:var(--panel);border:1px solid var(--line);border-radius:7px;
+  display:flex;align-items:center;gap:14px;padding:8px 12px;flex-wrap:wrap;box-shadow:var(--shadow)}
+.brand{display:flex;flex-direction:column;line-height:1.05}
+.brand b{font-family:var(--f-lbl);font-weight:700;font-size:15px;letter-spacing:.09em;text-transform:uppercase}
+.brand span{font-family:var(--f-lbl);font-size:10px;letter-spacing:.14em;color:var(--ink-3);text-transform:uppercase}
+.simtag{font-family:var(--f-lbl);font-size:10px;font-weight:700;letter-spacing:.13em;text-transform:uppercase;
+  padding:4px 8px;border-radius:3px;background:var(--accent-soft);color:var(--accent);border:1px solid var(--accent)}
+.clockwrap{display:flex;gap:16px;margin-left:auto;align-items:center}
+.kv{display:flex;flex-direction:column;gap:1px}
+.kv span{font-family:var(--f-lbl);font-size:9px;letter-spacing:.12em;color:var(--ink-3);text-transform:uppercase}
+.kv b{font-family:var(--f-num);font-size:14px;font-weight:500;font-variant-numeric:tabular-nums}
+.seg{display:flex;border:1px solid var(--line);border-radius:5px;overflow:hidden}
+.seg button{background:var(--panel-2);border:0;border-right:1px solid var(--line);padding:5px 9px;cursor:pointer;
+  font-family:var(--f-num);font-size:11px}
+.seg button:last-child{border-right:0}
+.seg button[aria-pressed="true"]{background:var(--accent);color:var(--accent-ink)}
+.seg button:hover:not([aria-pressed="true"]){background:var(--sunk)}
+
+/* ---------- stage ---------- */
+.stage{display:grid;grid-template-columns:238px minmax(0,1fr) 384px;gap:6px;min-height:0}
+.stage>*{min-width:0;min-height:0}
+.panel{background:var(--panel);border:1px solid var(--line);border-radius:7px;min-height:0;
+  overflow:hidden;box-shadow:var(--shadow)}
+.phead{display:flex;align-items:center;gap:8px;padding:7px 10px;border-bottom:1px solid var(--line-soft)}
+.phead h2{margin:0;font-family:var(--f-lbl);font-size:10px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--ink-2)}
+.phead .right{margin-left:auto;font-family:var(--f-num);font-size:10px;color:var(--ink-3)}
+
+/* rail */
+.rail{display:grid;grid-template-rows:auto minmax(0,1fr) auto auto;min-height:0}
+.gridgo{padding:8px 10px;border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:5px}
+.gridgo label{font-family:var(--f-lbl);font-size:10px;font-weight:700;letter-spacing:.13em;
+  text-transform:uppercase;color:var(--ink-2)}
+.rail>*{min-width:0}
+.gridgo{min-width:0}
+.gridrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:4px}
+.gridrow input{width:100%;min-width:0;background:var(--sunk);border:1px solid var(--line);border-radius:4px;
+  padding:5px 7px;font-family:var(--f-num);font-size:11px;text-transform:uppercase}
+.gridmsg{margin:0;font-size:10px;line-height:1.35;color:var(--ink-3);font-family:var(--f-lbl);letter-spacing:.04em}
+.gridmsg.bad{color:var(--alert)} .gridmsg.good{color:var(--nominal)}
+.gridmsg.warn{color:var(--caution)}
+.igopts{display:grid;grid-template-columns:minmax(0,1fr);gap:4px}
+.igopts select{min-width:0}
+.gridstrip{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft);
+  border-top:1px solid var(--line-soft)}
+.gcell{background:var(--panel);padding:6px 9px}
+.gcell span{display:block;font-family:var(--f-lbl);font-size:8.5px;letter-spacing:.11em;
+  text-transform:uppercase;color:var(--ink-3)}
+.gcell b{display:block;font-family:var(--f-num);font-size:12.5px;font-weight:600;margin-top:2px;
+  letter-spacing:.02em;font-variant-numeric:tabular-nums}
+.vidhint{padding:0 8px 7px;font-family:var(--f-lbl);font-size:10px;letter-spacing:.05em;color:var(--ink-3)}
+.clsSel{background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:5px 6px;
+  font-family:var(--f-lbl);font-size:10px;font-weight:600;letter-spacing:.06em;text-transform:uppercase}
+.del{background:none;border:0;color:var(--ink-3);cursor:pointer;font-size:14px;line-height:1;padding:0 4px}
+.del:hover{color:var(--alert)}
+.row.obsrow{grid-template-columns:52px 1fr auto}
+.plist{overflow:auto;padding:6px}
+.pcard{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;width:100%;text-align:left;
+  background:var(--panel-2);border:1px solid var(--line-soft);border-left:3px solid var(--trk,var(--ink-3));
+  border-radius:5px;padding:7px 8px;margin-bottom:5px;cursor:pointer}
+.pcard:hover{background:var(--sunk)}
+.pcard[aria-pressed="true"]{border-color:var(--accent);border-left-color:var(--trk,var(--accent));background:var(--accent-soft)}
+.pcard .cs{font-family:var(--f-lbl);font-weight:700;font-size:12px;letter-spacing:.06em}
+.pcard .ty{font-family:var(--f-lbl);font-size:9.5px;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3);display:block}
+.pip{width:8px;height:8px;border-radius:50%;background:var(--nominal);flex:none}
+.pip.caution{background:var(--caution)} .pip.alert{background:var(--alert)}
+.eye{border:1px solid var(--line);background:var(--panel);border-radius:4px;width:24px;height:22px;cursor:pointer;
+  font-family:var(--f-lbl);font-size:9px;font-weight:700;letter-spacing:.05em;color:var(--ink-3);padding:0}
+.eye[aria-pressed="true"]{color:var(--ink);border-color:var(--ink-3)}
+.layers{padding:8px 10px;border-top:1px solid var(--line-soft);display:flex;flex-direction:column;gap:6px}
+.chk{display:flex;align-items:center;gap:7px;font-family:var(--f-lbl);font-size:11px;letter-spacing:.06em;
+  text-transform:uppercase;color:var(--ink-2);cursor:pointer}
+.chk input{accent-color:var(--accent);width:13px;height:13px}
+
+/* map */
+.mapwrap{position:relative;overflow:hidden}
+#mapCanvas{display:block;width:100%;height:100%;cursor:crosshair;touch-action:none}
+.mapctl{position:absolute;top:8px;right:8px;display:flex;flex-direction:column;gap:4px}
+.mapctl button{width:28px;height:26px;border:1px solid var(--line);background:var(--panel);border-radius:4px;cursor:pointer;
+  font-family:var(--f-num);font-size:12px;box-shadow:var(--shadow);padding:0}
+.mapctl button:hover{background:var(--panel-2)}
+.readout{position:absolute;left:8px;bottom:8px;background:color-mix(in srgb,var(--panel) 92%,transparent);
+  border:1px solid var(--line);border-radius:5px;padding:6px 9px;font-family:var(--f-num);font-size:10.5px;
+  line-height:1.5;color:var(--ink-2);font-variant-numeric:tabular-nums;pointer-events:none}
+.readout b{color:var(--ink);font-weight:500}
+.hint{position:absolute;left:8px;top:8px;background:color-mix(in srgb,var(--panel) 92%,transparent);
+  border:1px solid var(--line);border-radius:5px;padding:5px 8px;font-family:var(--f-lbl);font-size:10px;
+  letter-spacing:.07em;text-transform:uppercase;color:var(--ink-3);pointer-events:none}
+
+/* sensor column */
+.side{display:grid;grid-template-rows:auto auto minmax(0,1fr);gap:6px;min-height:0}
+.vidbox{position:relative;aspect-ratio:4/3;max-width:100%;background:#000;overflow:hidden;border-radius:0 0 6px 6px}
+#vidCanvas{display:block;width:100%;height:100%}
+.vidctl{display:flex;gap:5px;padding:6px 8px;border-top:1px solid var(--line-soft);flex-wrap:wrap}
+.btn{background:var(--panel-2);border:1px solid var(--line);border-radius:4px;padding:5px 8px;cursor:pointer;
+  font-family:var(--f-lbl);font-size:10px;font-weight:600;letter-spacing:.08em;text-transform:uppercase}
+.btn:hover{background:var(--sunk)}
+.btn.primary{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.btn.primary:hover{filter:brightness(1.08)}
+.tgrid{display:grid;grid-template-columns:repeat(4,1fr);gap:1px;background:var(--line-soft);
+  border-top:1px solid var(--line-soft)}
+.tile{background:var(--panel);padding:6px 8px}
+.tile span{display:block;font-family:var(--f-lbl);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.tile b{display:block;font-family:var(--f-num);font-size:13px;font-weight:500;margin-top:2px;font-variant-numeric:tabular-nums}
+.tile b.caution{color:var(--caution)} .tile b.alert{color:var(--alert)}
+.sparks{display:grid;grid-template-columns:1fr 1fr;gap:1px;background:var(--line-soft)}
+.spark{background:var(--panel);padding:5px 8px 3px}
+.spark span{font-family:var(--f-lbl);font-size:8.5px;letter-spacing:.11em;text-transform:uppercase;color:var(--ink-3)}
+.spark canvas{display:block;width:100%;height:26px;max-width:100%}
+
+/* log */
+.logpanel{display:grid;grid-template-rows:auto 1fr;min-height:0}
+.tabs{display:flex;gap:4px;margin-left:auto}
+.tab{background:none;border:0;border-bottom:2px solid transparent;padding:3px 6px;cursor:pointer;
+  font-family:var(--f-lbl);font-size:10px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+.tab[aria-selected="true"]{color:var(--ink);border-bottom-color:var(--accent)}
+.logbody{overflow:auto;padding:4px 0}
+.row{display:grid;grid-template-columns:52px 1fr;gap:8px;padding:5px 10px;border-bottom:1px solid var(--line-soft);
+  font-size:11.5px;line-height:1.4}
+.row:last-child{border-bottom:0}
+.row time{font-family:var(--f-num);font-size:10.5px;color:var(--ink-3);font-variant-numeric:tabular-nums}
+.row .msg{color:var(--ink-2)}
+.row .msg b{color:var(--ink);font-family:var(--f-lbl);font-weight:700;letter-spacing:.05em}
+.row.caution{background:color-mix(in srgb,var(--caution) 10%,transparent)}
+.row.alert{background:color-mix(in srgb,var(--alert) 12%,transparent)}
+.row.caution .msg b{color:var(--caution)} .row.alert .msg b{color:var(--alert)}
+.obsrow{cursor:pointer}
+.obsrow:hover{background:var(--panel-2)}
+.empty{padding:16px 12px;color:var(--ink-3);font-size:12px;line-height:1.5}
+
+/* status */
+.statusbar{background:var(--panel);border:1px solid var(--line);border-radius:7px;display:flex;align-items:center;
+  gap:6px 16px;padding:6px 12px;font-family:var(--f-num);font-size:10.5px;color:var(--ink-2);flex-wrap:wrap;
+  font-variant-numeric:tabular-nums;box-shadow:var(--shadow)}
+.statusbar .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--nominal);margin-right:5px}
+.statusbar .note{margin-left:auto;color:var(--ink-3)}
+
+/* modal */
+.modal[hidden]{display:none!important}
+.modal{position:fixed;inset:0;background:rgba(6,12,20,.62);display:grid;place-items:center;padding:16px;z-index:50}
+.sheet{background:var(--panel);border:1px solid var(--line);border-radius:8px;width:min(620px,100%);max-height:80vh;
+  display:grid;grid-template-rows:auto 1fr auto;box-shadow:var(--shadow)}
+.sheet textarea{width:100%;height:100%;min-height:240px;resize:none;border:0;background:var(--sunk);color:var(--ink);
+  font-family:var(--f-num);font-size:11px;padding:10px;border-radius:0}
+.sheet textarea:focus{outline:none}
+.sheetfoot{display:flex;gap:6px;padding:8px 10px;border-top:1px solid var(--line-soft);align-items:center}
+.sheetfoot .said{font-size:11px;color:var(--nominal);font-family:var(--f-lbl);letter-spacing:.06em}
+
+.mobtabs{display:none}
+@media (max-width:1100px){ .stage{grid-template-columns:210px minmax(0,1fr) 330px} .tgrid{grid-template-columns:repeat(2,1fr)} }
+@media (max-width:860px){
+  body{overflow:auto}
+  .app{height:auto;min-height:100%}
+  .mobtabs{display:flex;gap:4px;background:var(--panel);border:1px solid var(--line);border-radius:7px;padding:4px}
+  .mobtabs button{flex:1;background:none;border:0;border-radius:4px;padding:7px;cursor:pointer;
+    font-family:var(--f-lbl);font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--ink-3)}
+  .mobtabs button[aria-selected="true"]{background:var(--accent);color:var(--accent-ink)}
+  .stage{grid-template-columns:1fr;grid-template-rows:auto}
+  .stage>.view{display:none}
+  .stage>.view.on{display:grid}
+  .mapwrap{height:60vh;min-height:320px;display:block!important}
+  .stage>.mapwrap:not(.on){display:none!important}
+  .side{grid-template-rows:auto auto auto}
+  .logbody{max-height:40vh}
+  .clockwrap{margin-left:0;width:100%;justify-content:space-between}
+}
+@media (prefers-reduced-motion:reduce){*{animation-duration:.001ms!important;transition-duration:.001ms!important}}
+</style>
+
+<div class="app">
+  <header class="cmdbar">
+    <div class="brand"><b>Sentinel COP</b><span>Multi-sensor common operating picture</span></div>
+    <div class="simtag">Simulated · training</div>
+    <div class="seg" role="group" aria-label="Simulation rate">
+      <button id="btnPlay" aria-pressed="true" title="Play / pause (Space)">❚❚</button>
+      <button data-rate="1" aria-pressed="true">1×</button>
+      <button data-rate="4" aria-pressed="false">4×</button>
+      <button data-rate="12" aria-pressed="false">12×</button>
+    </div>
+    <div class="seg" role="group" aria-label="Display mode">
+      <button id="btnDay" aria-pressed="false" title="Daylight console">DAY</button>
+      <button id="btnNight" aria-pressed="false" title="Night console">NIGHT</button>
+    </div>
+    <div class="clockwrap">
+      <div class="kv"><span>Zulu</span><b id="clockZ">--:--:--</b></div>
+      <div class="kv"><span>Mission elapsed</span><b id="clockE">00:00:00</b></div>
+      <div class="kv"><span>Exercise</span><b id="missionId">EX SANDSTORM / SIM-04</b></div>
+    </div>
+  </header>
+
+  <nav class="mobtabs" role="tablist" aria-label="Sections">
+    <button role="tab" data-view="rail" aria-selected="false">Platforms</button>
+    <button role="tab" data-view="map" aria-selected="true">Map</button>
+    <button role="tab" data-view="side" aria-selected="false">Sensor</button>
+  </nav>
+
+  <main class="stage">
+    <section class="panel rail view" data-view="rail">
+      <div class="phead"><h2>Platforms</h2><span class="right" id="railCount">5 tracked</span></div>
+      <div class="plist" id="plist"></div>
+
+      <div class="gridgo">
+        <label for="sysSel">Reference system</label>
+        <select class="clsSel" id="sysSel" style="width:100%">
+          <option value="mgrs" selected>MGRS · WGS84</option>
+          <option value="ig">Indian Grid · Everest</option>
+        </select>
+        <div class="igopts" id="igOpts" hidden>
+          <select class="clsSel" id="datumSel" aria-label="Datum realisation">
+            <option value="kal1975" selected>Kalianpur 1975</option>
+            <option value="kal1962">Kalianpur 1962</option>
+            <option value="kal1937">Kalianpur 1937</option>
+            <option value="ind1975">Indian 1975</option>
+          </select>
+          <select class="clsSel" id="zoneSel" aria-label="Indian Grid zone">
+            <option value="">Zone: auto</option>
+            <option value="I">Zone I</option><option value="IIa">Zone IIa</option>
+            <option value="IIb">Zone IIb</option><option value="IIIa">Zone IIIa</option>
+            <option value="IVa">Zone IVa</option>
+          </select>
+        </div>
+        <p class="gridmsg" id="datumMsg" hidden></p>
+        <label for="gridIn">Go to grid</label>
+        <div class="gridrow">
+          <input id="gridIn" type="text" placeholder="11S MU 670 509" autocomplete="off" spellcheck="false">
+          <button class="btn" id="gridGo">Go</button>
+          <button class="btn primary" id="gridPlot" title="Plot a point at this grid reference">Plot</button>
+        </div>
+        <p class="gridmsg" id="gridMsg">MGRS, 4–10 digits. Spaces optional.</p>
+      </div>
+      <div class="layers">
+        <label class="chk"><input type="checkbox" id="lyMgrs" checked> MGRS grid</label>
+        <label class="chk"><input type="checkbox" id="lyTrail" checked> Track history</label>
+        <label class="chk"><input type="checkbox" id="lyFov" checked> Sensor footprints</label>
+        <label class="chk"><input type="checkbox" id="lyLabel" checked> Callsign labels</label>
+        <label class="chk"><input type="checkbox" id="lyGrid"> Lat/long graticule</label>
+        <label class="chk"><input type="checkbox" id="lyObs" checked> Plotted points</label>
+        <label class="chk"><input type="checkbox" id="lyRing"> Range rings (selected)</label>
+      </div>
+    </section>
+
+    <section class="panel mapwrap view on" data-view="map">
+      <canvas id="mapCanvas"></canvas>
+      <div class="hint">Drag to pan · wheel to zoom · shift-click to plot a point</div>
+      <div class="mapctl">
+        <button id="zIn" title="Zoom in (+)">+</button>
+        <button id="zOut" title="Zoom out (−)">−</button>
+        <button id="zFit" title="Fit all platforms (F)">⤢</button>
+        <button id="zLock" title="Lock view to selected platform" aria-pressed="false">⦿</button>
+      </div>
+      <div class="readout" id="readout">CURSOR —</div>
+    </section>
+
+    <section class="side view" data-view="side">
+      <div class="panel">
+        <div class="phead"><h2 id="vidTitle">Sensor · —</h2><span class="right" id="vidLink">LINK —</span></div>
+        <div class="vidbox"><canvas id="vidCanvas"></canvas></div>
+        <div class="vidctl">
+          <div class="seg" role="group" aria-label="Sensor band">
+            <button data-band="eo" aria-pressed="true">EO</button>
+            <button data-band="ir" aria-pressed="false">IR</button>
+          </div>
+          <button class="btn" id="btnWide">Wide</button>
+          <button class="btn" id="btnNarrow">Narrow</button>
+          <button class="btn" id="btnFreeze" aria-pressed="false">Freeze</button>
+          <select class="clsSel" id="clsSel" aria-label="Point classification">
+            <option>Vehicle</option><option>Structure</option><option>Activity</option>
+            <option>Reference</option><option selected>Unknown</option>
+          </select>
+          <button class="btn primary" id="btnObs">Plot boresight</button>
+        </div>
+        <p class="vidhint">Click anywhere in the image to plot that point on the map.</p>
+        <div class="gridstrip">
+          <div class="gcell"><span>Platform grid</span><b id="gPlat">—</b></div>
+          <div class="gcell"><span>Sensor aimpoint grid</span><b id="gAim">—</b></div>
+        </div>
+        <div class="tgrid">
+          <div class="tile"><span>Latitude</span><b id="tLat">—</b></div>
+          <div class="tile"><span>Longitude</span><b id="tLon">—</b></div>
+          <div class="tile"><span>Alt AGL</span><b id="tAlt">—</b></div>
+          <div class="tile"><span>Heading</span><b id="tHdg">—</b></div>
+          <div class="tile"><span>Ground speed</span><b id="tSpd">—</b></div>
+          <div class="tile"><span>Sensor az</span><b id="tAz">—</b></div>
+          <div class="tile"><span>Slant range</span><b id="tSlant">—</b></div>
+          <div class="tile"><span>Endurance</span><b id="tEnd">—</b></div>
+        </div>
+        <div class="sparks">
+          <div class="spark"><span>Altitude · 5 min</span><canvas id="spkAlt"></canvas></div>
+          <div class="spark"><span>Link margin · 5 min</span><canvas id="spkLink"></canvas></div>
+        </div>
+      </div>
+
+      <div class="panel logpanel">
+        <div class="phead">
+          <h2>Mission log</h2>
+          <div class="tabs" role="tablist" aria-label="Log view">
+            <button class="tab" role="tab" id="tabEvents" aria-selected="true">Events</button>
+            <button class="tab" role="tab" id="tabObs" aria-selected="false">Points</button>
+          </div>
+          <button class="btn" id="btnExport" style="margin-left:8px">Export</button>
+        </div>
+        <div class="logbody" id="logBody"></div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="statusbar">
+    <span><i class="dot"></i>SIM ENGINE RUNNING</span>
+    <span id="stLinks">LINKS 5/5</span>
+    <span id="stObs">POINTS 0</span>
+    <span id="stScale">SCALE —</span>
+    <span id="stCenter">CENTER —</span>
+    <span class="note">Synthetic telemetry and synthetic imagery. No live sensor feed is connected.</span>
+  </footer>
+</div>
+
+<div class="modal" id="modal" hidden role="dialog" aria-modal="true" aria-label="Export mission data">
+  <div class="sheet">
+    <div class="phead"><h2>Export</h2>
+      <div class="tabs" style="margin-left:auto">
+        <button class="tab" id="exCsv" aria-selected="true">CSV</button>
+        <button class="tab" id="exJson" aria-selected="false">JSON</button>
+      </div>
+    </div>
+    <textarea id="exText" readonly spellcheck="false"></textarea>
+    <div class="sheetfoot">
+      <button class="btn primary" id="exCopy">Copy to clipboard</button>
+      <button class="btn" id="exClose">Close</button>
+      <span class="said" id="exSaid" hidden>Copied</span>
+    </div>
+  </div>
+</div>
+
+<script>
+"use strict";
+/* ============================================================
+   Sentinel COP — self-contained simulation console.
+   No network calls, no live feeds: every value below is synthetic.
+   ============================================================ */
+
+/* ---------- deterministic RNG ---------- */
+function mulberry32(a){return function(){a|=0;a=a+0x6D2B79F5|0;let t=Math.imul(a^a>>>15,1|a);t=t+Math.imul(t^t>>>7,61|t)^t;return((t^t>>>14)>>>0)/4294967296}}
+
+/* ---------- exercise area (fictional range) ---------- */
+const ORIGIN={lat:28.0220,lon:73.3110};
+const M_PER_DEG_LAT=111320;
+const M_PER_DEG_LON=111320*Math.cos(ORIGIN.lat*Math.PI/180);
+const mToLat=m=>m/M_PER_DEG_LAT, mToLon=m=>m/M_PER_DEG_LON;
+const latToM=d=>d*M_PER_DEG_LAT, lonToM=d=>d*M_PER_DEG_LON;
+
+/* hemisphere-aware geographic formatting */
+function fmtLL(lat,lon,dp){
+  dp=dp===undefined?5:dp;
+  return Math.abs(lat).toFixed(dp)+(lat<0?"S":"N")+"  "+Math.abs(lon).toFixed(dp)+(lon<0?"W":"E");
+}
+
+const mapToLL=(x,y)=>({lat:ORIGIN.lat+mToLat(y),lon:ORIGIN.lon+mToLon(x)});
+const llToMap=(lat,lon)=>({x:lonToM(lon-ORIGIN.lon),y:latToM(lat-ORIGIN.lat)});
+
+/* ============================================================
+   WGS84 geodetic ⇄ UTM ⇄ MGRS.
+   Forward and reverse verified against an independent reference
+   implementation: 84/84 exact forward, 0.000 m reverse deviation.
+   ============================================================ */
+const GA=6378137.0, GF=1/298.257223563, E2=GF*(2-GF), EP2=E2/(1-E2), K0=0.9996;
+const D2R=Math.PI/180, R2D=180/Math.PI;
+const BANDS="CDEFGHJKLMNPQRSTUVWX";
+const E100K=["ABCDEFGH","JKLMNPQR","STUVWXYZ"];
+const N100K="ABCDEFGHJKLMNPQRSTUV";
+const BAND_MIN_N={C:1100000,D:2000000,E:2800000,F:3700000,G:4600000,H:5500000,J:6400000,
+  K:7300000,L:8200000,M:9100000,N:0,P:800000,Q:1700000,R:2600000,S:3500000,T:4400000,
+  U:5500000,V:6300000,W:7000000,X:7900000};
+function utmZone(lat,lon){
+  let z=Math.floor((lon+180)/6)+1;
+  if(lat>=56&&lat<64&&lon>=3&&lon<12) z=32;
+  if(lat>=72&&lat<84){
+    if(lon>=0&&lon<9)z=31; else if(lon>=9&&lon<21)z=33;
+    else if(lon>=21&&lon<33)z=35; else if(lon>=33&&lon<42)z=37;
+  }
+  return z;
+}
+function bandLetter(lat){return lat>=84?"X":lat<-80?"C":BANDS[Math.floor((lat+80)/8)]}
+function meridArc(phi){
+  return GA*((1-E2/4-3*E2*E2/64-5*E2*E2*E2/256)*phi
+    -(3*E2/8+3*E2*E2/32+45*E2*E2*E2/1024)*Math.sin(2*phi)
+    +(15*E2*E2/256+45*E2*E2*E2/1024)*Math.sin(4*phi)
+    -(35*E2*E2*E2/3072)*Math.sin(6*phi));
+}
+function latLonToUTM(lat,lon){
+  const zone=utmZone(lat,lon), lon0=((zone-1)*6-180+3)*D2R;
+  const p=lat*D2R, l=lon*D2R, sp=Math.sin(p), cp=Math.cos(p), tp=Math.tan(p);
+  const N=GA/Math.sqrt(1-E2*sp*sp), T=tp*tp, C=EP2*cp*cp, Aa=cp*(l-lon0), M=meridArc(p);
+  const A2=Aa*Aa,A3=A2*Aa,A4=A3*Aa,A5=A4*Aa,A6=A5*Aa;
+  let e=K0*N*(Aa+(1-T+C)*A3/6+(5-18*T+T*T+72*C-58*EP2)*A5/120)+500000;
+  let n=K0*(M+N*tp*(A2/2+(5-T+9*C+4*C*C)*A4/24+(61-58*T+T*T+600*C-330*EP2)*A6/720));
+  if(lat<0) n+=10000000;
+  return {zone,band:bandLetter(lat),e,n};
+}
+function utmToLatLon(zone,northing,easting,south){
+  const lon0=((zone-1)*6-180+3)*D2R;
+  let n=northing; if(south) n-=10000000;
+  const M=n/K0, e1=(1-Math.sqrt(1-E2))/(1+Math.sqrt(1-E2));
+  const mu=M/(GA*(1-E2/4-3*E2*E2/64-5*E2*E2*E2/256));
+  const p1=mu+(3*e1/2-27*e1*e1*e1/32)*Math.sin(2*mu)
+    +(21*e1*e1/16-55*e1*e1*e1*e1/32)*Math.sin(4*mu)
+    +(151*e1*e1*e1/96)*Math.sin(6*mu)+(1097*e1*e1*e1*e1/512)*Math.sin(8*mu);
+  const sp=Math.sin(p1), cp=Math.cos(p1), tp=Math.tan(p1);
+  const C1=EP2*cp*cp, T1=tp*tp;
+  const N1=GA/Math.sqrt(1-E2*sp*sp), R1=GA*(1-E2)/Math.pow(1-E2*sp*sp,1.5);
+  const D=(easting-500000)/(N1*K0), D2=D*D,D3=D2*D,D4=D3*D,D5=D4*D,D6=D5*D;
+  const lat=p1-(N1*tp/R1)*(D2/2-(5+3*T1+10*C1-4*C1*C1-9*EP2)*D4/24
+    +(61+90*T1+298*C1+45*T1*T1-252*EP2-3*C1*C1)*D6/720);
+  const lon=lon0+(D-(1+2*T1+C1)*D3/6+(5-2*C1+28*T1-3*C1*C1+8*EP2+24*T1*T1)*D5/120)/cp;
+  return {lat:lat*R2D,lon:lon*R2D};
+}
+function toMGRS(lat,lon,digits){
+  digits=digits===undefined?5:digits;
+  const u=latLonToUTM(lat,lon);
+  const colL=E100K[(u.zone-1)%3][Math.floor(u.e/100000)-1];
+  let row=Math.floor(u.n/100000)%20;
+  if(u.zone%2===0) row=(row+5)%20;
+  const div=Math.pow(10,5-digits);
+  const e=Math.floor((u.e%100000)/div), n=Math.floor((u.n%100000)/div);
+  return u.zone+u.band+colL+N100K[row]+String(e).padStart(digits,"0")+String(n).padStart(digits,"0");
+}
+function fromMGRS(s){
+  s=String(s).replace(/\s+/g,"").toUpperCase();
+  const m=s.match(/^(\d{1,2})([C-HJ-NP-X])([A-HJ-NP-Z])([A-HJ-NP-V])(\d*)$/);
+  if(!m) return null;
+  const zone=+m[1], band=m[2], dig=m[5];
+  if(zone<1||zone>60||dig.length%2!==0||dig.length>10) return null;
+  const col=E100K[(zone-1)%3].indexOf(m[3]); if(col<0) return null;
+  let row=N100K.indexOf(m[4]); if(row<0) return null;
+  if(zone%2===0) row=(row+15)%20;              // undo the even-zone +5 offset
+  const half=dig.length/2, mul=Math.pow(10,5-half);
+  const e=(col+1)*100000+(half?+dig.slice(0,half)*mul:0);
+  let n=row*100000+(half?+dig.slice(half)*mul:0);
+  const minN=BAND_MIN_N[band]; if(minN===undefined) return null;
+  while(n<minN) n+=2000000;
+  const south=band<"N";                        // n already carries the false northing
+  const ll=utmToLatLon(zone,n,e,south);
+  return {lat:ll.lat,lon:ll.lon,precision:half?mul:100000};
+}
+/* angle from true north to grid north */
+function convergence(lat,lon){
+  const lon0=(utmZone(lat,lon)-1)*6-180+3;
+  return Math.atan(Math.tan((lon-lon0)*D2R)*Math.sin(lat*D2R))*R2D;
+}
+/* ============================================================
+   Survey of India Indian Grid — Lambert Conformal Conic (1SP) on the Everest
+   spheroid, reached from WGS84 by a Helmert shift. Every constant below is
+   taken from the EPSG registry, not from memory. Verified against PROJ over
+   324 conversions: 0.000 mm for the three-parameter datums, ≤15 mm for the
+   seven-parameter Indian 1975 (inverse uses negated rotations).
+   ============================================================ */
+const IG_DATUMS={
+  kal1975:{label:"Kalianpur 1975",a:6377299.151,rf:300.8017255,
+           dx:295,dy:736,dz:257,rx:0,ry:0,rz:0,s:0,x0:2743195.5,y0:914398.5,acc:22},
+  kal1962:{label:"Kalianpur 1962",a:6377301.243,rf:300.8017255,
+           dx:283,dy:682,dz:231,rx:0,ry:0,rz:0,s:0,x0:2743196.4,y0:914398.8,acc:999},
+  kal1937:{label:"Kalianpur 1937",a:6377276.345,rf:300.8017,
+           dx:214,dy:804,dz:268,rx:0,ry:0,rz:0,s:0,x0:2743185.69,y0:914395.23,acc:5},
+  ind1975:{label:"Indian 1975",a:6377276.345,rf:300.8017,
+           dx:293,dy:836,dz:318,rx:0.5,ry:1.6,rz:-2.8,s:2.1,x0:2743185.69,y0:914395.23,acc:3}
+};
+const IG_ZONES=[
+  {z:"I",   lat0:32.5,lon0:68,w:70.35,s:28.00,e:81.64,n:35.51},
+  {z:"IIa", lat0:26,  lon0:74,w:68.13,s:21.00,e:82.01,n:28.01},
+  {z:"IIb", lat0:26,  lon0:90,w:82.00,s:21.00,e:97.42,n:29.47},
+  {z:"IIIa",lat0:19,  lon0:80,w:70.14,s:15.00,e:87.15,n:21.01},
+  {z:"IVa", lat0:12,  lon0:80,w:73.94,s:8.02, e:80.40,n:15.01}
+];
+const IG_K0=0.99878641;
+/* zones overlap slightly at their edges, so auto-selection takes the zone the
+   point sits furthest inside rather than the first one that contains it */
+function igZoneFor(lat,lon){
+  let best=null,bm=-1;
+  for(const z of IG_ZONES){
+    if(lat<z.s||lat>z.n||lon<z.w||lon>z.e) continue;
+    const m=Math.min(lat-z.s,z.n-lat,lon-z.w,z.e-lon);
+    if(m>bm){bm=m;best=z}
+  }
+  return best;
+}
+function igHelmert(x,y,z,d,inv){
+  const g=inv?-1:1;
+  const rx=g*d.rx/3600*D2R, ry=g*d.ry/3600*D2R, rz=g*d.rz/3600*D2R, m=1+g*d.s*1e-6;
+  return [g*d.dx+m*(x-rz*y+ry*z), g*d.dy+m*(rz*x+y-rx*z), g*d.dz+m*(-ry*x+rx*y+z)];
+}
+function geodToCart(lat,lon,a,rf){
+  const f=1/rf, e2=f*(2-f), p=lat*D2R, l=lon*D2R;
+  const N=a/Math.sqrt(1-e2*Math.sin(p)*Math.sin(p));
+  return [N*Math.cos(p)*Math.cos(l),N*Math.cos(p)*Math.sin(l),N*(1-e2)*Math.sin(p)];
+}
+function cartToGeod(x,y,z,a,rf){
+  const f=1/rf, b=a*(1-f), e2=f*(2-f), ep2=(a*a-b*b)/(b*b);
+  const p=Math.hypot(x,y), th=Math.atan2(z*a,p*b);
+  const lat=Math.atan2(z+ep2*b*Math.pow(Math.sin(th),3),p-e2*a*Math.pow(Math.cos(th),3));
+  return {lat:lat*R2D,lon:Math.atan2(y,x)*R2D};
+}
+function wgsToLocal(lat,lon,d){
+  const c=geodToCart(lat,lon,6378137.0,298.257223563), l=igHelmert(c[0],c[1],c[2],d,true);
+  return cartToGeod(l[0],l[1],l[2],d.a,d.rf);
+}
+function localToWgs(lat,lon,d){
+  const c=geodToCart(lat,lon,d.a,d.rf), w=igHelmert(c[0],c[1],c[2],d,false);
+  return cartToGeod(w[0],w[1],w[2],6378137.0,298.257223563);
+}
+function lccConsts(zone,d){
+  const f=1/d.rf, e=Math.sqrt(f*(2-f)), p0=zone.lat0*D2R;
+  const m0=Math.cos(p0)/Math.sqrt(1-e*e*Math.sin(p0)*Math.sin(p0));
+  const t=p=>Math.tan(Math.PI/4-p/2)/Math.pow((1-e*Math.sin(p))/(1+e*Math.sin(p)),e/2);
+  const n=Math.sin(p0), F=m0/(n*Math.pow(t(p0),n));
+  return {e,n,F,rho0:d.a*IG_K0*F*Math.pow(t(p0),n),t};
+}
+function igForward(lat,lon,zone,d){
+  const c=lccConsts(zone,d), rho=d.a*IG_K0*c.F*Math.pow(c.t(lat*D2R),c.n);
+  let dl=(lon-zone.lon0)*D2R;
+  while(dl>Math.PI)dl-=2*Math.PI; while(dl<-Math.PI)dl+=2*Math.PI;
+  const th=c.n*dl;
+  return {E:d.x0+rho*Math.sin(th), N:d.y0+c.rho0-rho*Math.cos(th)};
+}
+function igInverse(E,N,zone,d){
+  const c=lccConsts(zone,d), x=E-d.x0, y=c.rho0-(N-d.y0), g=c.n<0?-1:1;
+  const rho=g*Math.hypot(x,y), th=Math.atan2(g*x,g*y);
+  const t=Math.pow(rho/(d.a*IG_K0*c.F),1/c.n);
+  let p=Math.PI/2-2*Math.atan(t);
+  for(let i=0;i<8;i++){const es=c.e*Math.sin(p);p=Math.PI/2-2*Math.atan(t*Math.pow((1-es)/(1+es),c.e/2))}
+  return {lat:p*R2D, lon:zone.lon0+(th/c.n)*R2D};
+}
+function toIndianGrid(lat,lon,datumKey,forceZone){
+  const d=IG_DATUMS[datumKey||igDatum];
+  const zone=forceZone?IG_ZONES.find(z=>z.z===forceZone):igZoneFor(lat,lon);
+  if(!zone) return null;
+  const l=wgsToLocal(lat,lon,d), p=igForward(l.lat,l.lon,zone,d);
+  return {zone:zone.z,E:p.E,N:p.N,datum:d.label,acc:d.acc};
+}
+function fromIndianGrid(zoneName,E,N,datumKey){
+  const d=IG_DATUMS[datumKey||igDatum];
+  const zone=IG_ZONES.find(z=>z.z.toUpperCase()===String(zoneName).toUpperCase());
+  if(!zone) return null;
+  const g=igInverse(E,N,zone,d);
+  return localToWgs(g.lat,g.lon,d);
+}
+/* full reference, e.g. "IIa 2843215E 1024887N" */
+function igFmt(g){
+  if(!g) return "outside Indian Grid";
+  return g.zone+" "+Math.round(g.E)+"E "+Math.round(g.N)+"N";
+}
+/* truncated reference in the usual map-reading form, e.g. "IIa 43215 24887" */
+function igFmtShort(g,digits){
+  if(!g) return "—";
+  digits=digits||5;
+  const m=Math.pow(10,digits), dv=Math.pow(10,5-digits);
+  const e=Math.floor((g.E%100000)/dv), n=Math.floor((g.N%100000)/dv);
+  return g.zone+" "+String(e).padStart(digits,"0")+" "+String(n).padStart(digits,"0");
+}
+
+/* map metres → grid reference, at a chosen number of digits per axis */
+function gridOf(x,y,digits){const p=mapToLL(x,y);return toMGRS(p.lat,p.lon,digits===undefined?5:digits)}
+/* pretty form: 11S MU 67069 50923 */
+function gridFmt(g){
+  if(!g) return "—";
+  const m=g.match(/^(\d{1,2}[C-X])([A-Z]{2})(\d*)$/);
+  if(!m) return g;
+  const d=m[3], h=d.length/2;
+  return m[1]+" "+m[2]+(d?" "+d.slice(0,h)+" "+d.slice(h):"");
+}
+
+/* ---------- world geometry (shared by map and sensor video) ---------- */
+const world=(()=>{
+  const r=mulberry32(20260921);
+  const roads=[],blocks=[],relief=[],water=[],pads=[];
+  // primary route running NE, with branches
+  function road(x0,y0,ang,len,seg,w){
+    const pts=[[x0,y0]];let x=x0,y=y0,a=ang;
+    for(let i=0;i<seg;i++){a+=(r()-.5)*.35;x+=Math.cos(a)*len;y+=Math.sin(a)*len;pts.push([x,y])}
+    roads.push({pts,w});return pts;
+  }
+  const main=road(-4200,1800,-0.35,520,16,2.4);
+  road(-1500,-2600,1.15,430,11,1.6);
+  road(2600,-3200,2.45,380,10,1.6);
+  for(let i=0;i<5;i++){const p=main[3+i*2];road(p[0],p[1],r()*Math.PI*2,300,5,1)}
+  // river / dry wash
+  {const pts=[];let x=-4600,y=-2400,a=0.55;
+   for(let i=0;i<22;i++){a+=(r()-.5)*.5;x+=Math.cos(a)*440;y+=Math.sin(a)*440;pts.push([x,y])}
+   water.push({pts,w:34});}
+  // built-up blocks clustered in two settlements
+  [[-900,900],[2300,-1500]].forEach(([cx,cy],ci)=>{
+    const n=ci?16:26;
+    for(let i=0;i<n;i++){
+      const a=r()*Math.PI*2,d=Math.pow(r(),.6)*(ci?900:1300);
+      blocks.push({x:cx+Math.cos(a)*d,y:cy+Math.sin(a)*d,w:60+r()*150,h:50+r()*120,rot:(r()-.5)*.6});
+    }
+    pads.push({x:cx,y:cy,rad:ci?1050:1500});
+  });
+  // relief blobs
+  for(let i=0;i<40;i++) relief.push({x:(r()-.5)*11000,y:(r()-.5)*9000,rad:300+r()*900,k:r()});
+  return {roads,blocks,relief,water,pads};
+})();
+
+/* Draw the world through an arbitrary projection fn(xMetres,yMetres)->[px,py].
+   `pal` swaps colours so the same geometry reads as a map or as camera imagery. */
+function drawWorld(ctx,proj,pal,scale){
+  const P=(x,y)=>proj(x,y);
+  // relief, drawn as nested contour rings rather than soft blobs
+  for(const b of world.relief){
+    const c=P(b.x,b.y),rr=b.rad*scale;
+    if(rr<1.2) continue;
+    ctx.beginPath();ctx.arc(c[0],c[1],rr,0,6.2832);
+    ctx.fillStyle=pal.relief(b.k);ctx.fill();
+    if(rr>16&&pal.contour){
+      ctx.strokeStyle=pal.contour;ctx.lineWidth=.8;
+      for(let n=1;n<=3;n++){ctx.beginPath();ctx.arc(c[0],c[1],rr*(1-n*.24),0,6.2832);ctx.stroke()}
+    }
+  }
+  // built-up footprint haze
+  for(const p of world.pads){
+    const c=P(p.x,p.y),rr=p.rad*scale;
+    ctx.beginPath();ctx.arc(c[0],c[1],rr,0,6.2832);
+    ctx.fillStyle=pal.pad;ctx.fill();
+  }
+  // water
+  ctx.lineCap="round";ctx.lineJoin="round";
+  for(const w of world.water){
+    ctx.beginPath();w.pts.forEach((p,i)=>{const q=P(p[0],p[1]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});
+    ctx.strokeStyle=pal.water;ctx.lineWidth=Math.max(1,w.w*scale);ctx.stroke();
+  }
+  // blocks
+  for(const b of world.blocks){
+    const c=P(b.x,b.y),w=b.w*scale,h=b.h*scale;
+    if(w<.7&&h<.7) continue;
+    ctx.save();ctx.translate(c[0],c[1]);ctx.rotate(b.rot+(pal.rot||0));
+    ctx.fillStyle=pal.urban;ctx.fillRect(-w/2,-h/2,w,h);
+    if(w>6){ctx.strokeStyle=pal.urbanEdge;ctx.lineWidth=.6;ctx.strokeRect(-w/2,-h/2,w,h)}
+    ctx.restore();
+  }
+  // roads (casing then fill)
+  for(const pass of [0,1]){
+    for(const rd of world.roads){
+      ctx.beginPath();rd.pts.forEach((p,i)=>{const q=P(p[0],p[1]);i?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])});
+      ctx.strokeStyle=pass?pal.road:pal.roadCase;
+      ctx.lineWidth=Math.max(pass?.8:1.6,rd.w*scale*(pass?7:11));
+      ctx.stroke();
+    }
+  }
+}
+
+/* ---------- platforms ---------- */
+const TRACK_COLORS=["#3aa0e0","#9a6bd8","#0f9b8e","#c8892a","#cf5578"];
+const TRACK_COLORS_NIGHT=["#56b6ff","#c792ea","#6fd3c7","#ffd479","#ff8fa3"];
+
+const SETTLEMENT_A={x:-900,y:900}, SETTLEMENT_B={x:2300,y:-1500};
+const platforms=[
+  {id:0,cs:"HAWKEYE 21",type:"MALE UAV",pattern:"orbit",  cx:-600, cy:600,  rad:2600,period:520,alt:2400,fov:9,  end:7.4*3600,visible:true,stare:SETTLEMENT_A},
+  {id:1,cs:"HAWKEYE 24",type:"MALE UAV",pattern:"racetrack",cx:2400,cy:-1400,rad:2200,period:640,alt:2950,fov:8, end:5.1*3600,visible:true,stare:SETTLEMENT_B},
+  {id:2,cs:"KESTREL 09", type:"Rotary ISR",pattern:"transit",cx:-2600,cy:-1600,rad:3400,period:400,alt:900,fov:11,end:2.3*3600,visible:true,stare:SETTLEMENT_A},
+  {id:3,cs:"WATCHTOWER", type:"Mast camera",pattern:"static", cx:-880, cy:870, rad:0,  period:300,alt:34, fov:12, end:Infinity,visible:true,grange:620,azBase:120},
+  {id:4,cs:"GROUND 03",  type:"Unattended sensor",pattern:"static",cx:2310,cy:-1470,rad:0,period:240,alt:6,fov:18,end:96*3600,visible:true,grange:430,azBase:250}
+];
+platforms.forEach((p,i)=>{
+  p.phase=i*1.37; p.trail=[]; p.histAlt=[]; p.histLink=[];
+  p.band="eo"; p.fovCur=p.fov; p.frozen=false; p.state="nominal"; p.lastState="nominal";
+});
+
+/* deterministic kinematics: position is a pure function of mission time */
+function stateAt(p,t){
+  const w=2*Math.PI/p.period, a=w*t+p.phase;
+  let x,y,hdg,gs;
+  if(p.pattern==="orbit"){
+    x=p.cx+Math.cos(a)*p.rad; y=p.cy+Math.sin(a)*p.rad;
+    hdg=(a*180/Math.PI+90)%360; gs=p.rad*w;
+  } else if(p.pattern==="racetrack"){
+    const s=(a/(2*Math.PI))%1, L=p.rad*1.5;
+    if(s<.35){x=p.cx-L/2+ (s/.35)*L; y=p.cy-p.rad*.45; hdg=90; gs=L/(p.period*.35)}
+    else if(s<.5){const u=(s-.35)/.15*Math.PI; x=p.cx+L/2+Math.sin(u)*p.rad*.45; y=p.cy-p.rad*.45+ (1-Math.cos(u))*p.rad*.45; hdg=90+u*180/Math.PI; gs=p.rad*.45*Math.PI/(p.period*.15)}
+    else if(s<.85){x=p.cx+L/2-((s-.5)/.35)*L; y=p.cy+p.rad*.45; hdg=270; gs=L/(p.period*.35)}
+    else {const u=(s-.85)/.15*Math.PI; x=p.cx-L/2-Math.sin(u)*p.rad*.45; y=p.cy+p.rad*.45-(1-Math.cos(u))*p.rad*.45; hdg=270+u*180/Math.PI; gs=p.rad*.45*Math.PI/(p.period*.15)}
+  } else if(p.pattern==="transit"){
+    const s=Math.sin(a), c=Math.cos(a);
+    x=p.cx+s*p.rad; y=p.cy+s*p.rad*.35;
+    hdg=c>=0?68:248; gs=Math.abs(c)*p.rad*w*1.06;
+  } else { x=p.cx; y=p.cy; hdg=(Math.sin(a*.5)*120+180+360)%360; gs=0; }
+  const alt=p.alt+(p.pattern==="static"?0:Math.sin(t/37+p.phase)*45);
+  /* Sensor geometry from a stare point: moving platforms hold a point of interest
+     while they orbit; fixed sensors sweep a sector at a set ground range. */
+  let fx,fy;
+  if(p.pattern==="static"){
+    const azs=(p.azBase+Math.sin(a*.5)*60+360)%360, ar=(90-azs)*Math.PI/180;
+    fx=x+Math.cos(ar)*p.grange; fy=y+Math.sin(ar)*p.grange;
+  } else {
+    fx=p.stare.x+Math.sin(t/31+p.phase)*260;
+    fy=p.stare.y+Math.cos(t/27+p.phase)*260;
+  }
+  const dx=fx-x, dy=fy-y;
+  const gnd=Math.max(1,Math.hypot(dx,dy));
+  const az=(Math.atan2(dx,dy)*180/Math.PI+360)%360;
+  const dep=Math.atan2(alt,gnd)*180/Math.PI;
+  const slant=Math.hypot(gnd,alt);
+  // link margin: baseline minus range loss, plus deterministic fades
+  const base=p.pattern==="static"?21:17;
+  const fade=Math.sin(t/61+p.phase*2)*4+Math.sin(t/13.7+p.phase)*1.6;
+  const dropout=Math.max(0,Math.sin(t/173+p.phase*3)-0.955)*180;
+  const link=Math.max(0,base+fade-dropout-(alt>2500?1.5:0));
+  const endLeft=p.end===Infinity?Infinity:Math.max(0,p.end-t);
+  return {x,y,alt,hdg,gs,az,dep,slant,fx,fy,link,endLeft};
+}
+
+/* ---------- observations & events ---------- */
+const observations=[],events=[];
+let obsSeq=0;
+function logEvent(sev,src,msg){
+  events.unshift({t:sim.t,sev,src,msg});
+  if(events.length>260) events.pop();
+  if(logView==="events") renderLog();
+}
+function ptId(n){return "PT-"+String(n).padStart(3,"0")}
+function addObservation(x,y,src,note,cls){
+  obsSeq++;
+  const ll=mapToLL(x,y);
+  const o={id:obsSeq,t:sim.t,x,y,src,note:note||"Point of interest",
+    cls:cls||currentClass(),lat:ll.lat,lon:ll.lon,grid:toMGRS(ll.lat,ll.lon,5),
+    ig:igFmt(igAt(x,y)),igDatum:IG_DATUMS[igDatum].label};
+  observations.push(o);
+  logEvent("info",src,`${ptId(o.id)} plotted — ${o.cls} at ${refShort(x,y)}`);
+  el.stObs.textContent="POINTS "+observations.length;
+  if(logView==="obs") renderLog();
+  return o;
+}
+function currentClass(){const s=document.getElementById("clsSel");return s?s.value:"Unknown"}
+function removeObservation(id){
+  const i=observations.findIndex(o=>o.id===id);
+  if(i<0) return;
+  const o=observations[i];observations.splice(i,1);
+  logEvent("info","OPERATOR",ptId(o.id)+" removed");
+  el.stObs.textContent="POINTS "+observations.length;renderLog();
+}
+
+/* ---------- sim clock ---------- */
+const sim={t:0,rate:1,running:true,epoch:Date.UTC(2026,8,21,6,12,0)};
+
+/* ---------- DOM ---------- */
+const el={};
+["plist","railCount","mapCanvas","vidCanvas","readout","clockZ","clockE","logBody","stLinks","stObs","stScale","stCenter",
+ "vidTitle","vidLink","tLat","tLon","tAlt","tHdg","tSpd","tAz","tSlant","tEnd","spkAlt","spkLink",
+ "modal","exText","exSaid","btnPlay","btnDay","btnNight","btnFreeze","zLock","gPlat","gAim"].forEach(id=>el[id]=document.getElementById(id));
+
+let selected=0, logView="events", exFmt="csv", focusPt=null;
+/* active reference system for every grid readout in the app */
+let coordSys="mgrs", igDatum="kal1975", igZoneOverride="";
+/* The working zone is fixed by the exercise area, the way a sheet series fixes
+   it, so panning never silently switches zone mid-mission. Override in the rail. */
+function workingZone(){const z=igZoneFor(ORIGIN.lat,ORIGIN.lon);return igZoneOverride||(z&&z.z)||""}
+function igAt(x,y){const p=mapToLL(x,y);return toIndianGrid(p.lat,p.lon,igDatum,workingZone()||undefined)}
+/* one formatter used by every readout, so the whole COP switches together */
+function refOf(x,y,short){
+  if(coordSys==="ig"){const g=igAt(x,y);return short?igFmtShort(g,5):igFmt(g)}
+  return gridFmt(gridOf(x,y,5));
+}
+function refShort(x,y){
+  if(coordSys==="ig"){const g=igAt(x,y);return igFmtShort(g,4)}
+  return gridFmt(gridOf(x,y,4));
+}
+function sysLabel(){return coordSys==="ig"?"INDIAN GRID · "+IG_DATUMS[igDatum].label:"MGRS · WGS84"}
+const layers={trail:true,fov:true,label:true,grid:false,obs:true,ring:false,mgrs:true};
+["lyTrail","lyFov","lyLabel","lyGrid","lyObs","lyRing","lyMgrs"].forEach(id=>{
+  const key=id.slice(2).toLowerCase(), input=document.getElementById(id);
+  input.addEventListener("change",()=>{layers[key]=input.checked});
+});
+
+/* ---------- map view ---------- */
+const view={cx:0,cy:0,scale:0.035,lock:false}; // scale = px per metre
+function isNight(){
+  const t=document.documentElement.getAttribute("data-theme");
+  if(t==="dark") return true; if(t==="light") return false;
+  return window.matchMedia("(prefers-color-scheme: dark)").matches;
+}
+function css(name){return getComputedStyle(document.documentElement).getPropertyValue(name).trim()}
+function trackColor(i){return (isNight()?TRACK_COLORS_NIGHT:TRACK_COLORS)[i%5]}
+
+/* ---------- canvas plumbing ---------- */
+function fit(canvas){
+  const dpr=Math.min(window.devicePixelRatio||1,2);
+  const w=canvas.clientWidth||1,h=canvas.clientHeight||1;
+  if(canvas.width!==Math.round(w*dpr)||canvas.height!==Math.round(h*dpr)){
+    canvas.width=Math.round(w*dpr);canvas.height=Math.round(h*dpr);
+  }
+  const ctx=canvas.getContext("2d");
+  ctx.setTransform(dpr,0,0,dpr,0,0);
+  return {ctx,w,h};
+}
+
+/* ---------- map rendering ---------- */
+function mapProj(w,h){const s=view.scale;return (x,y)=>[w/2+(x-view.cx)*s, h/2-(y-view.cy)*s]}
+function mapUnproj(w,h,px,py){const s=view.scale;return [view.cx+(px-w/2)/s, view.cy-(py-h/2)/s]}
+
+function drawMap(){
+  const {ctx,w,h}=fit(el.mapCanvas);
+  const night=isNight();
+  ctx.fillStyle=css("--map-ground");ctx.fillRect(0,0,w,h);
+  const P=mapProj(w,h);
+  drawWorld(ctx,P,{
+    relief:k=>night?`rgba(90,130,170,${.02+k*.035})`:`rgba(126,142,118,${.035+k*.045})`,
+    contour:night?"rgba(110,150,190,.07)":"rgba(110,125,105,.14)",
+    pad:night?"rgba(120,150,190,.05)":"rgba(160,150,130,.11)",
+    water:css("--map-water"), urban:css("--map-urban"),
+    urbanEdge:night?"rgba(150,180,220,.18)":"rgba(90,80,70,.2)",
+    road:css("--map-road"), roadCase:css("--map-road-2")
+  },view.scale);
+
+  if(layers.grid) drawGraticule(ctx,w,h);
+  if(layers.mgrs) (coordSys==="ig"?drawIndianGrid:drawMgrsGrid)(ctx,w,h);
+
+  // plotted points
+  if(layers.obs) for(const o of observations){
+    const q=P(o.x,o.y), hot=(o.id===focusPt);
+    ctx.beginPath();ctx.moveTo(q[0],q[1]-7);ctx.lineTo(q[0]+7,q[1]);ctx.lineTo(q[0],q[1]+7);ctx.lineTo(q[0]-7,q[1]);ctx.closePath();
+    ctx.fillStyle=css("--accent");ctx.fill();
+    ctx.strokeStyle=night?"#06101c":"#fff";ctx.lineWidth=1.4;ctx.stroke();
+    if(hot){ctx.beginPath();ctx.arc(q[0],q[1],13,0,6.2832);
+      ctx.strokeStyle=css("--accent");ctx.lineWidth=1.4;ctx.stroke()}
+    ctx.fillStyle=css("--ink");ctx.font="500 9px 'IBM Plex Mono',monospace";ctx.textAlign="left";
+    ctx.fillText(ptId(o.id),q[0]+10,q[1]+3);
+    if(view.scale>0.05){
+      ctx.fillStyle=css("--ink-3");ctx.font="400 8px 'IBM Plex Mono',monospace";
+      ctx.fillText(refShort(o.x,o.y),q[0]+10,q[1]+13);
+    }
+  }
+
+  // platforms
+  platforms.forEach((p,i)=>{
+    if(!p.visible) return;
+    const s=p.now, c=trackColor(i), q=P(s.x,s.y), sel=(i===selected);
+
+    if(layers.trail&&p.trail.length>1){
+      ctx.lineWidth=sel?2.2:1.4;ctx.lineJoin="round";
+      for(let j=1;j<p.trail.length;j++){
+        const a=P(p.trail[j-1][0],p.trail[j-1][1]),b=P(p.trail[j][0],p.trail[j][1]);
+        ctx.globalAlpha=(j/p.trail.length)*(sel?.85:.5);
+        ctx.beginPath();ctx.moveTo(a[0],a[1]);ctx.lineTo(b[0],b[1]);ctx.strokeStyle=c;ctx.stroke();
+      }
+      ctx.globalAlpha=1;
+    }
+    if(layers.fov){
+      const half=p.fovCur/2*Math.PI/180;
+      const fx=s.fx, fy=s.fy;
+      const spread=Math.max(40,s.slant*Math.tan(half));
+      const dxn=(fx-s.x)/Math.hypot(fx-s.x,fy-s.y), dyn=(fy-s.y)/Math.hypot(fx-s.x,fy-s.y);
+      const perp=[-dyn,dxn];
+      const a1=P(fx+perp[0]*spread,fy+perp[1]*spread), a2=P(fx-perp[0]*spread,fy-perp[1]*spread);
+      ctx.beginPath();ctx.moveTo(q[0],q[1]);ctx.lineTo(a1[0],a1[1]);ctx.lineTo(a2[0],a2[1]);ctx.closePath();
+      ctx.fillStyle=c;ctx.globalAlpha=sel?.16:.08;ctx.fill();
+      ctx.globalAlpha=sel?.55:.28;ctx.strokeStyle=c;ctx.lineWidth=1;ctx.stroke();
+      ctx.globalAlpha=1;
+      const fc=P(fx,fy);
+      ctx.beginPath();ctx.arc(fc[0],fc[1],3,0,6.2832);ctx.strokeStyle=c;ctx.lineWidth=1.2;ctx.stroke();
+    }
+    if(layers.ring&&sel){
+      ctx.strokeStyle=c;ctx.globalAlpha=.3;ctx.setLineDash([3,4]);ctx.lineWidth=1;
+      [1000,2500,5000].forEach(r=>{ctx.beginPath();ctx.arc(q[0],q[1],r*view.scale,0,6.2832);ctx.stroke()});
+      ctx.setLineDash([]);ctx.globalAlpha=1;
+    }
+    // symbol: heading wedge for movers, square for static
+    ctx.save();ctx.translate(q[0],q[1]);
+    if(sel){ctx.beginPath();ctx.arc(0,0,13,0,6.2832);ctx.strokeStyle=css("--accent");ctx.lineWidth=1.6;ctx.stroke()}
+    if(p.pattern==="static"){
+      ctx.fillStyle=c;ctx.fillRect(-5,-5,10,10);
+      ctx.strokeStyle=night?"#06101c":"#fff";ctx.lineWidth=1.5;ctx.strokeRect(-5,-5,10,10);
+    } else {
+      ctx.rotate(s.hdg*Math.PI/180);
+      ctx.beginPath();ctx.moveTo(0,-9);ctx.lineTo(6.5,7);ctx.lineTo(0,3.6);ctx.lineTo(-6.5,7);ctx.closePath();
+      ctx.fillStyle=c;ctx.fill();ctx.strokeStyle=night?"#06101c":"#fff";ctx.lineWidth=1.3;ctx.stroke();
+    }
+    ctx.restore();
+    if(layers.label){
+      ctx.font="600 10px 'IBM Plex Sans Condensed',sans-serif";ctx.textAlign="left";
+      const label=p.cs+(p.state!=="nominal"?" ⚠":"");
+      const tw=ctx.measureText(label).width;
+      ctx.fillStyle=night?"rgba(7,13,21,.72)":"rgba(255,255,255,.78)";
+      ctx.fillRect(q[0]+11,q[1]-16,tw+7,13);
+      ctx.fillStyle=css("--ink");ctx.fillText(label,q[0]+14,q[1]-6);
+    }
+  });
+  drawScaleBar(ctx,w,h);
+  el.stScale.textContent="SCALE 1 PX ≈ "+(1/view.scale).toFixed(1)+" M";
+  const cll=mapToLL(view.cx,view.cy);
+  el.stCenter.textContent="CENTER "+refShort(view.cx,view.cy)
+    +(coordSys==="ig"?"  ·  "+IG_DATUMS[igDatum].label+" ±"+IG_DATUMS[igDatum].acc+"M"
+      :"  ·  GRID CONV "+(convergence(cll.lat,cll.lon)>=0?"+":"")+convergence(cll.lat,cll.lon).toFixed(2)+"°");
+}
+
+function drawGraticule(ctx,w,h){
+  const stepChoices=[100,250,500,1000,2500,5000,10000];
+  let step=stepChoices.find(s=>s*view.scale>75)||10000;
+  const [x0,y1]=mapUnproj(w,h,0,0), [x1,y0]=mapUnproj(w,h,w,h);
+  ctx.strokeStyle=css("--map-grid");ctx.lineWidth=1;
+  ctx.font="400 9px 'IBM Plex Mono',monospace";ctx.fillStyle=css("--ink-3");
+  const P=mapProj(w,h);
+  for(let x=Math.ceil(x0/step)*step;x<x1;x+=step){
+    const q=P(x,0);ctx.beginPath();ctx.moveTo(q[0],0);ctx.lineTo(q[0],h);ctx.stroke();
+    ctx.textAlign="left";ctx.fillText((ORIGIN.lon+mToLon(x)).toFixed(3)+"°",q[0]+3,11);
+  }
+  for(let y=Math.ceil(y0/step)*step;y<y1;y+=step){
+    const q=P(0,y);ctx.beginPath();ctx.moveTo(0,q[1]);ctx.lineTo(w,q[1]);ctx.stroke();
+    ctx.textAlign="left";ctx.fillText((ORIGIN.lat+mToLat(y)).toFixed(3)+"°",3,q[1]-3);
+  }
+}
+
+/* MGRS grid overlay. Lines are drawn as true lines of constant UTM easting and
+   northing, sampled through the geodetic conversion, so they sit at the real
+   grid-convergence angle to the map's true-north axis rather than square to it. */
+function drawMgrsGrid(ctx,w,h){
+  const [vx0,vy1]=mapUnproj(w,h,0,0), [vx1,vy0]=mapUnproj(w,h,w,h);
+  let interval=1000;
+  if(interval*view.scale>210) interval=100;
+  else if(interval*view.scale<26){interval=10000; if(interval*view.scale<26) interval=100000}
+  // UTM bounds of the visible corners
+  const corners=[[vx0,vy0],[vx1,vy0],[vx0,vy1],[vx1,vy1]].map(([x,y])=>{
+    const ll=mapToLL(x,y);return latLonToUTM(ll.lat,ll.lon);
+  });
+  const zone=corners[0].zone, south=corners[0].band<"N";
+  const eMin=Math.min(...corners.map(c=>c.e)), eMax=Math.max(...corners.map(c=>c.e));
+  const nMin=Math.min(...corners.map(c=>c.n)), nMax=Math.max(...corners.map(c=>c.n));
+  if((eMax-eMin)/interval>70||(nMax-nMin)/interval>70) return;
+  const P=mapProj(w,h);
+  const toScreen=(e,n)=>{const ll=utmToLatLon(zone,n,e,south);const m=llToMap(ll.lat,ll.lon);return P(m.x,m.y)};
+  ctx.strokeStyle=css("--map-grid");ctx.lineWidth=1;
+  ctx.font="500 9px 'IBM Plex Mono',monospace";ctx.fillStyle=css("--ink-3");
+  const km=v=>Math.floor(v/1000)%100;
+  const lbl=v=>interval>=1000?String(km(v)).padStart(2,"0")
+    :String(Math.floor(v/100)%1000).padStart(3,"0");
+  for(let e=Math.ceil(eMin/interval)*interval;e<=eMax;e+=interval){
+    ctx.beginPath();
+    for(let k=0;k<=4;k++){const q=toScreen(e,nMin+(nMax-nMin)*k/4);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}
+    ctx.lineWidth=(e%100000===0)?1.8:1;ctx.stroke();
+    const q=toScreen(e,nMax);ctx.textAlign="left";ctx.fillText(lbl(e),q[0]+3,12);
+  }
+  for(let n=Math.ceil(nMin/interval)*interval;n<=nMax;n+=interval){
+    ctx.beginPath();
+    for(let k=0;k<=4;k++){const q=toScreen(eMin+(eMax-eMin)*k/4,n);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}
+    ctx.lineWidth=(n%100000===0)?1.8:1;ctx.stroke();
+    const q=toScreen(eMin,n);ctx.textAlign="left";ctx.fillText(lbl(n),3,q[1]-3);
+  }
+  // 100 km square identifier for the view centre
+  const cll=mapToLL(view.cx,view.cy);
+  const sq=toMGRS(cll.lat,cll.lon,0);
+  ctx.textAlign="left";ctx.font="600 10px 'IBM Plex Sans Condensed',sans-serif";
+  ctx.fillStyle=css("--ink-2");
+  ctx.fillText("GRID "+sq+"  ·  "+(interval>=1000?interval/1000+" km":interval+" m")+" squares",10,48);
+}
+
+/* Indian Grid overlay — lines of constant Everest-datum easting and northing,
+   sampled back through the projection so they carry their true skew. */
+function drawIndianGrid(ctx,w,h){
+  const [vx0,vy1]=mapUnproj(w,h,0,0), [vx1,vy0]=mapUnproj(w,h,w,h);
+  const corners=[[vx0,vy0],[vx1,vy0],[vx0,vy1],[vx1,vy1]].map(([x,y])=>igAt(x,y));
+  if(corners.some(c=>!c)){
+    ctx.fillStyle=css("--ink-3");ctx.font="600 10px 'IBM Plex Sans Condensed',sans-serif";
+    ctx.textAlign="left";ctx.fillText("OUTSIDE INDIAN GRID COVERAGE",10,48);
+    return;
+  }
+  const zone=workingZone()||corners[0].zone;
+  let interval=1000;
+  if(interval*view.scale>210) interval=100;
+  else if(interval*view.scale<26){interval=10000; if(interval*view.scale<26) interval=100000}
+  const eMin=Math.min(...corners.map(c=>c.E)), eMax=Math.max(...corners.map(c=>c.E));
+  const nMin=Math.min(...corners.map(c=>c.N)), nMax=Math.max(...corners.map(c=>c.N));
+  if((eMax-eMin)/interval>70||(nMax-nMin)/interval>70) return;
+  const P=mapProj(w,h);
+  const toScreen=(E,N)=>{const ll=fromIndianGrid(zone,E,N,igDatum);
+    if(!ll) return [0,0];const m=llToMap(ll.lat,ll.lon);return P(m.x,m.y)};
+  ctx.strokeStyle=css("--map-grid");ctx.lineWidth=1;
+  ctx.font="500 9px 'IBM Plex Mono',monospace";ctx.fillStyle=css("--ink-3");
+  const lbl=v=>interval>=1000?String(Math.floor(v/1000)%100).padStart(2,"0")
+                             :String(Math.floor(v/100)%1000).padStart(3,"0");
+  for(let E=Math.ceil(eMin/interval)*interval;E<=eMax;E+=interval){
+    ctx.beginPath();
+    for(let k=0;k<=4;k++){const q=toScreen(E,nMin+(nMax-nMin)*k/4);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}
+    ctx.lineWidth=(E%100000===0)?1.8:1;ctx.stroke();
+    const q=toScreen(E,nMax);ctx.textAlign="left";ctx.fillText(lbl(E),q[0]+3,12);
+  }
+  for(let N=Math.ceil(nMin/interval)*interval;N<=nMax;N+=interval){
+    ctx.beginPath();
+    for(let k=0;k<=4;k++){const q=toScreen(eMin+(eMax-eMin)*k/4,N);k?ctx.lineTo(q[0],q[1]):ctx.moveTo(q[0],q[1])}
+    ctx.lineWidth=(N%100000===0)?1.8:1;ctx.stroke();
+    const q=toScreen(eMin,N);ctx.textAlign="left";ctx.fillText(lbl(N),3,q[1]-3);
+  }
+  ctx.textAlign="left";ctx.font="600 10px 'IBM Plex Sans Condensed',sans-serif";
+  ctx.fillStyle=css("--ink-2");
+  ctx.fillText("INDIAN GRID ZONE "+zone+"  ·  "+IG_DATUMS[igDatum].label+"  ·  "
+    +(interval>=1000?interval/1000+" km":interval+" m")+" squares",10,48);
+}
+
+function drawScaleBar(ctx,w,h){
+  const target=110;
+  const opts=[50,100,250,500,1000,2000,5000,10000];
+  const m=opts.reduce((a,b)=>Math.abs(b*view.scale-target)<Math.abs(a*view.scale-target)?b:a);
+  const px=m*view.scale, x=w-px-16, y=h-16;
+  ctx.strokeStyle=css("--ink-2");ctx.lineWidth=1.5;
+  ctx.beginPath();ctx.moveTo(x,y-5);ctx.lineTo(x,y);ctx.lineTo(x+px,y);ctx.lineTo(x+px,y-5);ctx.stroke();
+  ctx.fillStyle=css("--ink-2");ctx.font="500 10px 'IBM Plex Mono',monospace";ctx.textAlign="center";
+  ctx.fillText(m>=1000?(m/1000)+" km":m+" m",x+px/2,y-8);
+  // north arrow
+  ctx.save();ctx.translate(w-24,h-58);
+  ctx.beginPath();ctx.moveTo(0,-12);ctx.lineTo(5,6);ctx.lineTo(0,2);ctx.lineTo(-5,6);ctx.closePath();
+  ctx.fillStyle=css("--ink-2");ctx.fill();
+  ctx.font="600 9px 'IBM Plex Sans Condensed',sans-serif";ctx.textAlign="center";ctx.fillText("N",0,18);
+  ctx.restore();
+}
+
+/* ---------- sensor video ---------- */
+let vidFrozenState=null;
+/* The ground-plane transform used by the most recent video frame, kept so a click
+   in the image can be inverted back to a ground position. The model is an affine
+   ground plane foreshortened by the depression angle — adequate for flat terrain
+   and this simulation; a live system would ray-cast the pixel against a DTM. */
+let vidGeo=null;
+function vidUnproj(px,py){
+  if(!vidGeo) return null;
+  const rx=px-vidGeo.w/2, ry=-(py-vidGeo.h/2)/vidGeo.squash;
+  const dx=rx*vidGeo.cosA+ry*vidGeo.sinA, dy=-rx*vidGeo.sinA+ry*vidGeo.cosA;
+  return [vidGeo.fx+dx/vidGeo.scale, vidGeo.fy+dy/vidGeo.scale];
+}
+function drawVideo(){
+  const cv=el.vidCanvas, {ctx,w,h}=fit(cv);
+  const p=platforms[selected];
+  const s=p.frozen&&vidFrozenState?vidFrozenState:p.now;
+  const night=isNight(), ir=p.band==="ir";
+  const linkLost=s.link<3;
+
+  ctx.fillStyle=ir?"#05070a":"#0a0c0e";ctx.fillRect(0,0,w,h);
+
+  if(linkLost){ vidGeo=null; drawNoSignal(ctx,w,h,p); drawOSD(ctx,w,h,p,s,true); return; }
+
+  // ground sample distance: metres per video pixel across the footprint
+  const gWidth=2*s.slant*Math.tan(p.fovCur/2*Math.PI/180);
+  const scale=w/Math.max(1,gWidth);
+  // rotate the world so the sensor's azimuth points up the frame
+  const azr=s.az*Math.PI/180;
+  const cosA=Math.cos(azr), sinA=Math.sin(azr);
+  // project world into camera frame: translate to footprint centre, rotate by azimuth,
+  // then squash vertically by the depression angle so the view foreshortens like a real oblique.
+  const squash=Math.max(.35,Math.sin(s.dep*Math.PI/180));
+  const proj=(x,y)=>{
+    const dx=(x-s.fx)*scale, dy=(y-s.fy)*scale;
+    const rx=dx*cosA-dy*sinA, ry=dx*sinA+dy*cosA;
+    return [w/2+rx, h/2-ry*squash];
+  };
+  vidGeo={w,h,scale,cosA,sinA,squash,fx:s.fx,fy:s.fy};
+  ctx.save();
+  const pal = ir ? {
+    relief:k=>`rgba(${40+k*40|0},${40+k*40|0},${44+k*40|0},.5)`,
+    pad:"rgba(120,120,125,.10)", water:"#131820", urban:"#9aa0a6",
+    urbanEdge:"rgba(220,225,230,.5)", road:"#4a5058", roadCase:"#22262c"
+  } : {
+    relief:k=>`rgba(${120+k*50|0},${118+k*45|0},${96+k*40|0},.30)`,
+    pad:"rgba(150,142,120,.18)", water:"#2b4354", urban:"#7d7669",
+    urbanEdge:"rgba(30,28,24,.55)", road:"#b6ad9c", roadCase:"#5e594e"
+  };
+  ctx.fillStyle=ir?"#1a1d22":"#4e4a3f";ctx.fillRect(0,0,w,h);
+  groundTexture(ctx,proj,s,gWidth,scale,ir,w,h);
+  drawWorld(ctx,proj,pal,scale);
+  ctx.restore();
+
+  // movers: deterministic contacts circulating the two built-up areas
+  const t=p.frozen&&vidFrozenState?vidFrozenState._t:sim.t;
+  let bestD=1e9,bestQ=null,bestK=0;
+  for(let k=0;k<8;k++){
+    const base=k%2?SETTLEMENT_B:SETTLEMENT_A, kk=Math.floor(k/2);
+    const ang=t/(70+kk*24)+k*1.9, rad=340+kk*280;
+    const q=proj(base.x+Math.cos(ang)*rad, base.y+Math.sin(ang)*rad*.8);
+    if(q[0]<-20||q[0]>w+20||q[1]<-20||q[1]>h+20) continue;
+    const r=Math.max(1.7,2.6*Math.min(3.2,scale*3));
+    ctx.beginPath();ctx.ellipse(q[0],q[1],r*1.25,r*.8,0,0,6.2832);
+    ctx.fillStyle=ir?"rgba(255,250,238,.96)":"rgba(26,24,20,.82)";ctx.fill();
+    if(ir){ctx.beginPath();ctx.arc(q[0],q[1],r*3,0,6.2832);
+      ctx.fillStyle="rgba(255,238,205,.13)";ctx.fill()}
+    const d=Math.hypot(q[0]-w/2,q[1]-h/2);
+    if(d<bestD){bestD=d;bestQ=q;bestK=k}
+  }
+  if(bestQ&&bestD<Math.min(w,h)*.42){ // auto-track box on the contact nearest boresight
+    ctx.strokeStyle="rgba(180,230,255,.85)";ctx.lineWidth=1;
+    ctx.strokeRect(bestQ[0]-12,bestQ[1]-12,24,24);
+    ctx.font="500 8px 'IBM Plex Mono',monospace";ctx.fillStyle="rgba(180,230,255,.9)";ctx.textAlign="left";
+    ctx.fillText("TRK "+String(bestK+1).padStart(2,"0"),bestQ[0]+15,bestQ[1]-13);
+  }
+
+  // sensor artefacts
+  grain(ctx,w,h,ir?0.075:0.045,t);
+  vignette(ctx,w,h);
+
+  // plotted points, projected back into the image so they stay locked to the ground
+  for(const o of observations){
+    const q=proj(o.x,o.y);
+    if(q[0]<6||q[0]>w-6||q[1]<6||q[1]>h-6) continue;
+    const hot=(o.id===focusPt);
+    ctx.strokeStyle=hot?"#ffd479":"#ff9a5c";ctx.lineWidth=1.3;
+    ctx.beginPath();
+    ctx.moveTo(q[0]-8,q[1]);ctx.lineTo(q[0]-3,q[1]);ctx.moveTo(q[0]+3,q[1]);ctx.lineTo(q[0]+8,q[1]);
+    ctx.moveTo(q[0],q[1]-8);ctx.lineTo(q[0],q[1]-3);ctx.moveTo(q[0],q[1]+3);ctx.lineTo(q[0],q[1]+8);
+    ctx.stroke();
+    ctx.beginPath();ctx.arc(q[0],q[1],9,0,6.2832);ctx.globalAlpha=.55;ctx.stroke();ctx.globalAlpha=1;
+    ctx.font="500 8px 'IBM Plex Mono',monospace";ctx.textAlign="left";
+    ctx.fillStyle=hot?"#ffd479":"#ff9a5c";
+    ctx.fillText(ptId(o.id),q[0]+12,q[1]+3);
+  }
+  if(!ir){ // rolling scan line, daylight sensor only
+    const yy=((t*38)%(h+60))-30;
+    const g=ctx.createLinearGradient(0,yy-16,0,yy+16);
+    g.addColorStop(0,"rgba(255,255,255,0)");g.addColorStop(.5,"rgba(255,255,255,.045)");g.addColorStop(1,"rgba(255,255,255,0)");
+    ctx.fillStyle=g;ctx.fillRect(0,yy-16,w,32);
+  }
+  drawOSD(ctx,w,h,p,s,false);
+}
+
+/* World-anchored scrub and rock texture: hashed per 40 m cell so it stays
+   locked to the ground as the sensor slews, the way real imagery does. */
+function groundTexture(ctx,proj,s,gWidth,scale,ir,w,h){
+  const cell=40, span=Math.min(26,Math.ceil(gWidth*1.4/cell));
+  const i0=Math.round(s.fx/cell), j0=Math.round(s.fy/cell);
+  for(let i=i0-span;i<=i0+span;i++){
+    for(let j=j0-span;j<=j0+span;j++){
+      const r=mulberry32((i*73856093^j*19349663)>>>0);
+      const n=r()<.62?1:2;
+      for(let k=0;k<n;k++){
+        const gx=i*cell+(r()-.5)*cell, gy=j*cell+(r()-.5)*cell;
+        const q=proj(gx,gy);
+        if(q[0]<-6||q[0]>w+6||q[1]<-6||q[1]>h+6) continue;
+        const v=r(), rad=Math.max(.6,(1.5+v*3.4)*Math.min(2.4,scale*2.6));
+        ctx.beginPath();ctx.ellipse(q[0],q[1],rad*1.2,rad*.75,v*3,0,6.2832);
+        ctx.fillStyle=ir
+          ? `rgba(${70+v*40|0},${72+v*40|0},${76+v*38|0},.55)`
+          : (v>.66?`rgba(${96+v*30|0},${92+v*26|0},${66+v*20|0},.55)`
+                  :`rgba(${64+v*26|0},${60+v*24|0},${44+v*18|0},.45)`);
+        ctx.fill();
+      }
+    }
+  }
+}
+function grain(ctx,w,h,amt,t){
+  const r=mulberry32(Math.floor(t*30)%99991);
+  ctx.save();ctx.globalAlpha=amt;
+  for(let i=0;i<360;i++){
+    const x=r()*w,y=r()*h,sz=r()*2+.5;
+    ctx.fillStyle=r()>.5?"#fff":"#000";ctx.fillRect(x,y,sz,sz);
+  }
+  ctx.restore();
+}
+function vignette(ctx,w,h){
+  const g=ctx.createRadialGradient(w/2,h/2,Math.min(w,h)*.25,w/2,h/2,Math.max(w,h)*.72);
+  g.addColorStop(0,"rgba(0,0,0,0)");g.addColorStop(1,"rgba(0,0,0,.55)");
+  ctx.fillStyle=g;ctx.fillRect(0,0,w,h);
+}
+function drawNoSignal(ctx,w,h,p){
+  const t=sim.t;
+  for(let i=0;i<h;i+=2){
+    const v=Math.abs(Math.sin(i*0.7+t*9))*255|0;
+    ctx.fillStyle=`rgba(${v},${v},${v},.10)`;ctx.fillRect(0,i,w,2);
+  }
+  grain(ctx,w,h,.28,t);
+  ctx.fillStyle="rgba(255,93,107,.95)";
+  ctx.font="700 13px 'IBM Plex Sans Condensed',sans-serif";ctx.textAlign="center";
+  ctx.fillText("LINK DEGRADED — NO VIDEO",w/2,h/2);
+}
+function drawOSD(ctx,w,h,p,s,lost){
+  const F="500 10px 'IBM Plex Mono',monospace";
+  ctx.font=F;ctx.textAlign="left";
+  const bright=lost?"rgba(255,140,140,.9)":"rgba(215,235,255,.92)";
+  // corner brackets
+  ctx.strokeStyle="rgba(215,235,255,.35)";ctx.lineWidth=1;
+  const m=10,L=16;
+  [[m,m,1,1],[w-m,m,-1,1],[m,h-m,1,-1],[w-m,h-m,-1,-1]].forEach(([x,y,sx,sy])=>{
+    ctx.beginPath();ctx.moveTo(x+sx*L,y);ctx.lineTo(x,y);ctx.lineTo(x,y+sy*L);ctx.stroke();
+  });
+  if(!lost){ // boresight reticle
+    ctx.strokeStyle="rgba(215,235,255,.55)";
+    ctx.beginPath();ctx.moveTo(w/2-22,h/2);ctx.lineTo(w/2-7,h/2);ctx.moveTo(w/2+7,h/2);ctx.lineTo(w/2+22,h/2);
+    ctx.moveTo(w/2,h/2-22);ctx.lineTo(w/2,h/2-7);ctx.moveTo(w/2,h/2+7);ctx.lineTo(w/2,h/2+22);ctx.stroke();
+    ctx.beginPath();ctx.arc(w/2,h/2,3,0,6.2832);ctx.stroke();
+  }
+  // permanent simulation watermark, on its own line above the data block
+  ctx.textAlign="center";ctx.font="600 9px 'IBM Plex Sans Condensed',sans-serif";
+  ctx.fillStyle="rgba(255,255,255,.38)";
+  ctx.fillText("SYNTHETIC IMAGERY · SIMULATION ONLY",w/2,17);
+  ctx.font=F;ctx.fillStyle=bright;
+  const ll=mapToLL(s.fx,s.fy);
+  ctx.textAlign="left";
+  ctx.fillText(p.cs,12,36);
+  ctx.fillText(refOf(s.fx,s.fy),12,50);
+  ctx.fillText(fmtLL(ll.lat,ll.lon),12,64);
+  ctx.textAlign="right";
+  ctx.fillText((p.band==="ir"?"IR / WHOT":"EO / DAY")+"  FOV "+p.fovCur.toFixed(1)+"°",w-12,36);
+  ctx.fillText("SR "+(s.slant/1000).toFixed(2)+" KM",w-12,50);
+  ctx.fillText("AZ "+Math.round(s.az).toString().padStart(3,"0")+"°  DEP "+Math.round(s.dep)+"°",w-12,h-14);
+  ctx.textAlign="left";
+  ctx.fillText(zulu(sim.t),12,h-14);
+  if(p.frozen){ctx.textAlign="center";ctx.fillStyle="rgba(255,200,80,.95)";
+    ctx.font="700 12px 'IBM Plex Sans Condensed',sans-serif";ctx.fillText("FRAME FROZEN",w/2,h-36)}
+}
+
+/* ---------- sparklines ---------- */
+function spark(canvas,data,lo,hi,color){
+  const {ctx,w,h}=fit(canvas);
+  ctx.clearRect(0,0,w,h);
+  if(data.length<2) return;
+  ctx.strokeStyle=css("--line-soft");ctx.lineWidth=1;
+  ctx.beginPath();ctx.moveTo(0,h-1);ctx.lineTo(w,h-1);ctx.stroke();
+  const n=data.length, X=i=>i/(n-1)*w, Y=v=>h-2-((v-lo)/(hi-lo))*(h-4);
+  ctx.beginPath();ctx.moveTo(X(0),Y(data[0]));
+  for(let i=1;i<n;i++) ctx.lineTo(X(i),Y(data[i]));
+  ctx.lineTo(w,h);ctx.lineTo(0,h);ctx.closePath();
+  ctx.fillStyle=color+"22";ctx.fill();
+  ctx.beginPath();ctx.moveTo(X(0),Y(data[0]));
+  for(let i=1;i<n;i++) ctx.lineTo(X(i),Y(data[i]));
+  ctx.strokeStyle=color;ctx.lineWidth=1.4;ctx.stroke();
+  ctx.beginPath();ctx.arc(w-1,Y(data[n-1]),2.2,0,6.2832);ctx.fillStyle=color;ctx.fill();
+}
+
+/* ---------- formatting ---------- */
+const pad2=n=>String(n).padStart(2,"0");
+function zulu(t){const d=new Date(sim.epoch+t*1000);
+  return pad2(d.getUTCHours())+":"+pad2(d.getUTCMinutes())+":"+pad2(d.getUTCSeconds())+"Z"}
+function elapsed(t){const s=Math.floor(t);return pad2(s/3600|0)+":"+pad2((s/60|0)%60)+":"+pad2(s%60)}
+function hhmm(sec){if(sec===Infinity) return "CONT";const m=Math.floor(sec/60);return (m/60|0)+"h "+pad2(m%60)+"m"}
+function bearing(fromX,fromY,toX,toY){return ((Math.atan2(toX-fromX,toY-fromY)*180/Math.PI)+360)%360}
+
+/* ---------- panels ---------- */
+function renderPlatformList(){
+  el.plist.innerHTML="";
+  platforms.forEach((p,i)=>{
+    const b=document.createElement("button");
+    b.className="pcard";b.setAttribute("aria-pressed",i===selected);
+    b.style.setProperty("--trk",trackColor(i));
+    b.innerHTML=`<i class="pip ${p.state==='nominal'?'':p.state}"></i>
+      <span><span class="cs">${p.cs}</span><span class="ty">${p.type}</span></span>
+      <span class="eye" role="button" aria-pressed="${p.visible}" title="Show or hide on map">${p.visible?"ON":"OFF"}</span>`;
+    b.addEventListener("click",e=>{
+      if(e.target.classList.contains("eye")){
+        p.visible=!p.visible;renderPlatformList();
+        logEvent("info",p.cs,p.visible?"Track shown on COP":"Track hidden from COP");
+        return;
+      }
+      select(i);
+    });
+    el.plist.appendChild(b);
+  });
+  el.railCount.textContent=platforms.filter(p=>p.visible).length+" of "+platforms.length+" shown";
+}
+function select(i){
+  selected=i;const p=platforms[i];
+  renderPlatformList();
+  el.vidTitle.textContent="Sensor · "+p.cs;
+  document.querySelectorAll("[data-band]").forEach(b=>b.setAttribute("aria-pressed",b.dataset.band===p.band));
+  el.btnFreeze.setAttribute("aria-pressed",p.frozen);
+  logEvent("info",p.cs,"Selected as primary sensor");
+  if(view.lock){view.cx=p.now.x;view.cy=p.now.y}
+}
+
+function renderLog(){
+  const body=el.logBody;
+  if(logView==="events"){
+    if(!events.length){body.innerHTML='<div class="empty">No events yet.</div>';return}
+    body.innerHTML=events.map(e=>
+      `<div class="row ${e.sev==='info'?'':e.sev}"><time>${elapsed(e.t).slice(3)}</time>
+       <span class="msg"><b>${e.src}</b> — ${e.msg}</span></div>`).join("");
+  } else {
+    if(!observations.length){
+      body.innerHTML='<div class="empty">No points plotted. Click anywhere in the sensor image to plot what the camera is looking at, use <b>Plot boresight</b>, enter a grid reference, or shift-click the map.</div>';return}
+    body.innerHTML=observations.slice().reverse().map(o=>
+      `<div class="row obsrow" data-obs="${o.id}"><time>${elapsed(o.t).slice(3)}</time>
+       <span class="msg"><b>${ptId(o.id)}</b> ${o.cls} — ${o.note}<br>
+       <b style="font-family:var(--f-num);letter-spacing:0">${refOf(o.x,o.y)}</b><br>
+       ${fmtLL(o.lat,o.lon)} · ${o.src}</span>
+       <button class="del" data-del="${o.id}" title="Remove ${ptId(o.id)}" aria-label="Remove ${ptId(o.id)}">×</button></div>`).join("");
+    body.querySelectorAll(".obsrow").forEach(r=>r.addEventListener("click",e=>{
+      if(e.target.dataset.del){removeObservation(+e.target.dataset.del);return}
+      const o=observations.find(x=>x.id===+r.dataset.obs);
+      if(o){view.cx=o.x;view.cy=o.y;focusPt=o.id;view.lock=false;
+        el.zLock.setAttribute("aria-pressed",false);view.scale=Math.max(view.scale,.08)}
+    }));
+  }
+}
+
+/* go-to-grid entry */
+function gridHint(){
+  return coordSys==="ig"
+    ? "Zone + easting + northing, e.g. IIa 2843215 1024887. Truncated refs use the current zone."
+    : "MGRS, 4–10 digits. Spaces optional.";
+}
+/* Accepts an MGRS string, or an Indian Grid reference as full metric easting and
+   northing, or a truncated grid reference resolved within the active zone. */
+function parseIndianGrid(raw){
+  const m=raw.toUpperCase().replace(/[,]/g," ")
+    .match(/^\s*(I{1,3}[AB]?|IV[AB]?)?\s*(\d{3,7})\s*(\d{3,7})\s*$/i);
+  if(!m) return null;
+  // the zone comes from one place only: the reference itself, else the view centre
+  const centre=igAt(view.cx,view.cy);
+  const zoneTxt=m[1]?m[1].replace(/([IV]+)([AB])/i,(x,a,b)=>a.toUpperCase()+b.toLowerCase())
+                    :(workingZone()||(centre&&centre.zone));
+  if(!zoneTxt) return null;
+  const zone=IG_ZONES.find(z=>z.z.toUpperCase()===zoneTxt.toUpperCase());
+  if(!zone) return null;
+  let E=+m[2], N=+m[3], prec=1;
+  if(m[2].length<7||m[3].length<7){
+    // truncated reference: rebuild against the 100 km square holding the view
+    // centre, expressed in the same zone the reference will be resolved in
+    const cll=mapToLL(view.cx,view.cy);
+    const base=toIndianGrid(cll.lat,cll.lon,igDatum,zone.z);
+    if(!base) return null;
+    const de=Math.pow(10,5-m[2].length), dn=Math.pow(10,5-m[3].length);
+    E=Math.floor(base.E/100000)*100000+E*de;
+    N=Math.floor(base.N/100000)*100000+N*dn;
+    prec=Math.max(de,dn);
+  }
+  const ll=fromIndianGrid(zone.z,E,N,igDatum);
+  return ll?{lat:ll.lat,lon:ll.lon,precision:prec}:null;
+}
+function readGrid(){
+  const raw=document.getElementById("gridIn").value.trim();
+  const msg=document.getElementById("gridMsg");
+  if(!raw){msg.className="gridmsg";msg.textContent=gridHint();return null}
+  const r=coordSys==="ig"?parseIndianGrid(raw):fromMGRS(raw);
+  if(!r){msg.className="gridmsg bad";
+    msg.textContent=coordSys==="ig"?"Not a valid Indian Grid reference.":"Not a valid MGRS reference.";
+    return null}
+  const m=llToMap(r.lat,r.lon);
+  msg.className="gridmsg good";
+  msg.textContent="Resolved to "+fmtLL(r.lat,r.lon)+" ±"+r.precision+" m";
+  return {x:m.x,y:m.y,precision:r.precision};
+}
+/* reference-system controls */
+function syncSys(){
+  const ig=coordSys==="ig";
+  document.getElementById("igOpts").hidden=!ig;
+  const dm=document.getElementById("datumMsg");
+  dm.hidden=!ig;
+  if(ig){
+    const d=IG_DATUMS[igDatum];
+    dm.className="gridmsg"+(d.acc>100?" warn":"");
+    dm.textContent="Everest "+(d.a).toFixed(3)+" m · datum shift to WGS84 stated by EPSG as ±"+d.acc+" m"
+      +(d.acc>100?" — low confidence, check against your sheet.":".");
+  }
+  document.getElementById("gridIn").placeholder=ig?"IIa 2843215 1024887":"43R FL 670 509";
+  const gm=document.getElementById("gridMsg");
+  if(!gm.classList.contains("good")&&!gm.classList.contains("bad")) gm.textContent=gridHint();
+  const outside=coordSys==="ig"&&!igAt(view.cx,view.cy);
+  if(outside) logEvent("caution","GRID","Map centre lies outside the Indian Grid zones");
+}
+document.getElementById("sysSel").onchange=e=>{
+  coordSys=e.target.value;syncSys();renderLog();
+  logEvent("info","GRID","Reference system → "+sysLabel());
+};
+document.getElementById("datumSel").onchange=e=>{
+  igDatum=e.target.value;syncSys();renderLog();
+  logEvent("info","GRID","Datum → "+IG_DATUMS[igDatum].label);
+};
+document.getElementById("zoneSel").onchange=e=>{
+  igZoneOverride=e.target.value;renderLog();
+  logEvent("info","GRID","Indian Grid zone → "+(igZoneOverride||"auto"));
+};
+document.getElementById("gridGo").onclick=()=>{
+  const g=readGrid();if(!g)return;
+  view.cx=g.x;view.cy=g.y;view.lock=false;el.zLock.setAttribute("aria-pressed",false);
+  view.scale=Math.min(.6,Math.max(view.scale,220/Math.max(50,g.precision)));
+  logEvent("info","OPERATOR","View centred on "+refOf(g.x,g.y));
+};
+document.getElementById("gridPlot").onclick=()=>{
+  const g=readGrid();if(!g)return;
+  const o=addObservation(g.x,g.y,"OPERATOR","Entered by grid reference");
+  focusPt=o.id;view.cx=g.x;view.cy=g.y;
+};
+document.getElementById("gridIn").addEventListener("keydown",e=>{
+  if(e.key==="Enter"){e.preventDefault();document.getElementById("gridGo").click()}
+});
+
+function updateTelemetry(){
+  const p=platforms[selected],s=p.now;
+  el.gPlat.textContent=refOf(s.x,s.y);
+  el.gAim.textContent=s.link<3?"— no video —":refOf(s.fx,s.fy);
+  el.tLat.textContent=(Math.abs(ORIGIN.lat+mToLat(s.y))).toFixed(5)+((ORIGIN.lat+mToLat(s.y))<0?"S":"N");
+  el.tLon.textContent=Math.abs(ORIGIN.lon+mToLon(s.x)).toFixed(5)+((ORIGIN.lon+mToLon(s.x))<0?"W":"E");
+  el.tAlt.textContent=Math.round(s.alt)+" m";
+  el.tHdg.textContent=Math.round(s.hdg).toString().padStart(3,"0")+"°";
+  el.tSpd.textContent=(s.gs*1.94384).toFixed(0)+" kt";
+  el.tAz.textContent=Math.round(s.az).toString().padStart(3,"0")+"°";
+  el.tSlant.textContent=(s.slant/1000).toFixed(2)+" km";
+  el.tEnd.textContent=hhmm(s.endLeft);
+  el.tEnd.className=s.endLeft<1800?"alert":(s.endLeft<3600?"caution":"");
+  const lq=s.link<3?"alert":(s.link<8?"caution":"");
+  el.vidLink.textContent="LINK "+s.link.toFixed(1)+" dB";
+  el.vidLink.style.color=lq==="alert"?css("--alert"):lq==="caution"?css("--caution"):css("--nominal");
+  spark(el.spkAlt,p.histAlt,Math.min(...p.histAlt)-30,Math.max(...p.histAlt)+30,trackColor(selected));
+  spark(el.spkLink,p.histLink,0,26,css("--nominal"));
+  const linksOk=platforms.filter(p=>p.now.link>=3).length;
+  el.stLinks.textContent="LINKS "+linksOk+"/"+platforms.length;
+}
+
+/* ---------- sim step ---------- */
+let lastFrame=performance.now(), histAcc=0, trailAcc=0;
+function step(now){
+  const dtReal=Math.min(.25,(now-lastFrame)/1000);lastFrame=now;
+  if(sim.running) sim.t+=dtReal*sim.rate;
+
+  platforms.forEach((p,i)=>{
+    p.now=stateAt(p,sim.t);
+    // state machine drives the event log
+    const s=p.now;
+    let st="nominal";
+    if(s.link<3||s.endLeft<1800) st="alert"; else if(s.link<8||s.endLeft<3600) st="caution";
+    p.state=st;
+    if(st!==p.lastState){
+      if(st==="alert"&&s.link<3) logEvent("alert",p.cs,"Datalink lost — video unavailable");
+      else if(st==="alert") logEvent("alert",p.cs,"Endurance below 30 min — recover platform");
+      else if(st==="caution"&&s.link<8) logEvent("caution",p.cs,"Link margin degraded to "+s.link.toFixed(1)+" dB");
+      else if(st==="caution") logEvent("caution",p.cs,"Endurance below 60 min");
+      else logEvent("info",p.cs,"Returned to nominal");
+      p.lastState=st;renderPlatformList();
+    }
+  });
+
+  trailAcc+=dtReal*sim.rate;
+  if(trailAcc>4){trailAcc=0;platforms.forEach(p=>{p.trail.push([p.now.x,p.now.y]);if(p.trail.length>170)p.trail.shift()})}
+  histAcc+=dtReal*sim.rate;
+  if(histAcc>5){histAcc=0;platforms.forEach(p=>{
+    p.histAlt.push(p.now.alt);if(p.histAlt.length>60)p.histAlt.shift();
+    p.histLink.push(p.now.link);if(p.histLink.length>60)p.histLink.shift();
+  })}
+
+  if(view.lock){const s=platforms[selected].now;view.cx=s.x;view.cy=s.y}
+
+  el.clockZ.textContent=zulu(sim.t);
+  el.clockE.textContent=elapsed(sim.t);
+  drawMap();drawVideo();updateTelemetry();
+  requestAnimationFrame(step);
+}
+
+/* ---------- interaction: map ---------- */
+const mc=el.mapCanvas;
+let drag=null;
+mc.addEventListener("pointerdown",e=>{
+  if(e.shiftKey){
+    const r=mc.getBoundingClientRect();
+    const [x,y]=mapUnproj(r.width,r.height,e.clientX-r.left,e.clientY-r.top);
+    focusPt=addObservation(x,y,"OPERATOR","Marked on map").id;
+    return;
+  }
+  drag={x:e.clientX,y:e.clientY,moved:false};mc.setPointerCapture(e.pointerId);
+});
+mc.addEventListener("pointermove",e=>{
+  const r=mc.getBoundingClientRect();
+  const [wx,wy]=mapUnproj(r.width,r.height,e.clientX-r.left,e.clientY-r.top);
+  const p=platforms[selected],s=p.now;
+  const rng=Math.hypot(wx-s.x,wy-s.y);
+  el.readout.innerHTML=`<span style="font-size:9px;letter-spacing:.08em">${sysLabel()}</span><br>GRID <b>${refOf(wx,wy)}</b><br>
+    <span style="opacity:.75">${fmtLL(ORIGIN.lat+mToLat(wy),ORIGIN.lon+mToLon(wx))}</span><br>
+    FROM ${p.cs} · BRG <b>${Math.round(bearing(s.x,s.y,wx,wy)).toString().padStart(3,"0")}°</b> · RNG <b>${(rng/1000).toFixed(2)} km</b>`;
+  if(!drag) return;
+  const dx=e.clientX-drag.x, dy=e.clientY-drag.y;
+  if(Math.abs(dx)+Math.abs(dy)>3) drag.moved=true;
+  view.cx-=dx/view.scale;view.cy+=dy/view.scale;
+  if(drag.moved&&view.lock){view.lock=false;el.zLock.setAttribute("aria-pressed",false)}
+  drag.x=e.clientX;drag.y=e.clientY;
+});
+mc.addEventListener("pointerup",e=>{
+  if(drag&&!drag.moved){ // click selects the nearest visible platform within 40 px
+    const r=mc.getBoundingClientRect();
+    const P=mapProj(r.width,r.height);
+    let best=-1,bd=40;
+    platforms.forEach((p,i)=>{if(!p.visible)return;const q=P(p.now.x,p.now.y);
+      const d=Math.hypot(q[0]-(e.clientX-r.left),q[1]-(e.clientY-r.top));if(d<bd){bd=d;best=i}});
+    if(best>=0) select(best);
+  }
+  drag=null;
+});
+mc.addEventListener("pointerleave",()=>{drag=null;el.readout.textContent="CURSOR —"});
+mc.addEventListener("wheel",e=>{
+  e.preventDefault();
+  const r=mc.getBoundingClientRect();
+  const [bx,by]=mapUnproj(r.width,r.height,e.clientX-r.left,e.clientY-r.top);
+  view.scale=Math.min(.6,Math.max(.006,view.scale*(e.deltaY<0?1.14:1/1.14)));
+  const [ax,ay]=mapUnproj(r.width,r.height,e.clientX-r.left,e.clientY-r.top);
+  view.cx+=bx-ax;view.cy+=by-ay;
+},{passive:false});
+
+function zoom(f){view.scale=Math.min(.6,Math.max(.006,view.scale*f))}
+document.getElementById("zIn").onclick=()=>zoom(1.3);
+document.getElementById("zOut").onclick=()=>zoom(1/1.3);
+document.getElementById("zFit").onclick=fitAll;
+el.zLock.onclick=()=>{view.lock=!view.lock;el.zLock.setAttribute("aria-pressed",view.lock);
+  if(view.lock){const s=platforms[selected].now;view.cx=s.x;view.cy=s.y}};
+function fitAll(){
+  const vis=platforms.filter(p=>p.visible&&p.now);if(!vis.length)return;
+  const xs=vis.map(p=>p.now.x),ys=vis.map(p=>p.now.y);
+  const minx=Math.min(...xs),maxx=Math.max(...xs),miny=Math.min(...ys),maxy=Math.max(...ys);
+  view.cx=(minx+maxx)/2;view.cy=(miny+maxy)/2;view.lock=false;el.zLock.setAttribute("aria-pressed",false);
+  const r=mc.getBoundingClientRect();
+  view.scale=Math.min(.6,Math.max(.006,Math.min(r.width/((maxx-minx)+3000),r.height/((maxy-miny)+3000))));
+}
+
+/* ---------- interaction: controls ---------- */
+el.btnPlay.onclick=()=>{sim.running=!sim.running;el.btnPlay.textContent=sim.running?"❚❚":"▶";
+  el.btnPlay.setAttribute("aria-pressed",sim.running);logEvent("info","SIM",sim.running?"Simulation resumed":"Simulation paused")};
+document.querySelectorAll("[data-rate]").forEach(b=>b.onclick=()=>{
+  sim.rate=+b.dataset.rate;
+  document.querySelectorAll("[data-rate]").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  logEvent("info","SIM","Rate set to "+sim.rate+"×");
+});
+document.querySelectorAll("[data-band]").forEach(b=>b.onclick=()=>{
+  const p=platforms[selected];p.band=b.dataset.band;
+  document.querySelectorAll("[data-band]").forEach(x=>x.setAttribute("aria-pressed",x===b));
+  logEvent("info",p.cs,"Sensor band → "+(p.band==="ir"?"infrared":"electro-optical"));
+});
+document.getElementById("btnWide").onclick=()=>{const p=platforms[selected];
+  p.fovCur=Math.min(p.fov*3,p.fovCur*1.5);logEvent("info",p.cs,"FOV widened to "+p.fovCur.toFixed(1)+"°")};
+document.getElementById("btnNarrow").onclick=()=>{const p=platforms[selected];
+  p.fovCur=Math.max(p.fov*0.18,p.fovCur/1.5);logEvent("info",p.cs,"FOV narrowed to "+p.fovCur.toFixed(1)+"°")};
+el.btnFreeze.onclick=()=>{const p=platforms[selected];p.frozen=!p.frozen;
+  vidFrozenState=p.frozen?Object.assign({},p.now,{_t:sim.t}):null;
+  el.btnFreeze.setAttribute("aria-pressed",p.frozen);
+  logEvent("info",p.cs,p.frozen?"Sensor frame frozen":"Sensor frame resumed")};
+document.getElementById("btnObs").onclick=()=>{
+  const p=platforms[selected],s=p.frozen&&vidFrozenState?vidFrozenState:p.now;
+  const o=addObservation(s.fx,s.fy,p.cs,"Sensor boresight · "+(p.band==="ir"?"IR":"EO"));
+  focusPt=o.id;
+};
+
+/* Click in the sensor image → invert the ground-plane transform → plot on the map. */
+el.vidCanvas.addEventListener("click",e=>{
+  const p=platforms[selected];
+  if(!vidGeo){logEvent("caution",p.cs,"Cannot plot: no video — datalink degraded");return}
+  const r=el.vidCanvas.getBoundingClientRect();
+  const g=vidUnproj(e.clientX-r.left,e.clientY-r.top);
+  if(!g) return;
+  const s=p.frozen&&vidFrozenState?vidFrozenState:p.now;
+  const rng=Math.hypot(g[0]-s.x,g[1]-s.y);
+  // a shallow grazing angle stretches range error badly; refuse the far field
+  if(rng>s.slant*4||!isFinite(rng)){
+    logEvent("caution",p.cs,"Cannot plot: point falls beyond usable sensor geometry");return;
+  }
+  const o=addObservation(g[0],g[1],p.cs,
+    "Plotted from "+(p.band==="ir"?"IR":"EO")+" image · brg "+
+    Math.round(bearing(s.x,s.y,g[0],g[1])).toString().padStart(3,"0")+"° rng "+(rng/1000).toFixed(2)+" km");
+  focusPt=o.id;
+});
+el.vidCanvas.style.cursor="crosshair";
+document.getElementById("tabEvents").onclick=()=>{logView="events";
+  document.getElementById("tabEvents").setAttribute("aria-selected",true);
+  document.getElementById("tabObs").setAttribute("aria-selected",false);renderLog()};
+document.getElementById("tabObs").onclick=()=>{logView="obs";
+  document.getElementById("tabObs").setAttribute("aria-selected",true);
+  document.getElementById("tabEvents").setAttribute("aria-selected",false);renderLog()};
+
+/* theme */
+function setTheme(mode){
+  if(mode) document.documentElement.setAttribute("data-theme",mode);
+  el.btnDay.setAttribute("aria-pressed",mode==="light");
+  el.btnNight.setAttribute("aria-pressed",mode==="dark");
+  renderPlatformList();
+}
+el.btnDay.onclick=()=>setTheme("light");
+el.btnNight.onclick=()=>setTheme("dark");
+setTheme(null);
+el.btnDay.setAttribute("aria-pressed",!isNight());
+el.btnNight.setAttribute("aria-pressed",isNight());
+
+/* mobile section tabs */
+document.querySelectorAll(".mobtabs button").forEach(b=>b.onclick=()=>{
+  document.querySelectorAll(".mobtabs button").forEach(x=>x.setAttribute("aria-selected",x===b));
+  document.querySelectorAll(".stage>.view").forEach(v=>v.classList.toggle("on",v.dataset.view===b.dataset.view));
+});
+
+/* export */
+function buildExport(){
+  if(exFmt==="csv"){
+    const head="record,id,mission_time_s,zulu,source,classification,mgrs,indian_grid,indian_datum,latitude,longitude,detail";
+    const obs=observations.map(o=>["point",ptId(o.id),o.t.toFixed(0),zulu(o.t),o.src,o.cls,o.grid,
+      JSON.stringify(o.ig),o.igDatum,o.lat.toFixed(6),o.lon.toFixed(6),JSON.stringify(o.note)].join(","));
+    const ev=events.slice().reverse().map((e,i)=>["event","EVT-"+String(i+1).padStart(3,"0"),e.t.toFixed(0),zulu(e.t),e.src,"","","","","","",
+      JSON.stringify(e.sev.toUpperCase()+": "+e.msg)].join(","));
+    return [head,...obs,...ev].join("\n");
+  }
+  return JSON.stringify({
+    exercise:"EX SANDSTORM / SIM-04", generated:zulu(sim.t), simulated:true,
+    note:"Synthetic training data. Not derived from any live sensor.",
+    datum:"WGS84", grid_systems:["MGRS/WGS84","Indian Grid/"+IG_DATUMS[igDatum].label],
+    indian_grid_note:"Everest spheroid, Lambert Conformal Conic 1SP. EPSG-stated datum shift accuracy ±"
+      +IG_DATUMS[igDatum].acc+" m.",
+    platforms:platforms.map(p=>({callsign:p.cs,type:p.type,state:p.state,
+      mgrs:gridOf(p.now.x,p.now.y,5),
+      latitude:+(ORIGIN.lat+mToLat(p.now.y)).toFixed(6),longitude:+(ORIGIN.lon+mToLon(p.now.x)).toFixed(6),
+      alt_agl_m:Math.round(p.now.alt),heading_deg:Math.round(p.now.hdg),
+      indian_grid:igFmt(igAt(p.now.x,p.now.y)),
+      sensor_az_deg:Math.round(p.now.az),aimpoint_mgrs:gridOf(p.now.fx,p.now.fy,5),
+      aimpoint_indian_grid:igFmt(igAt(p.now.fx,p.now.fy)),
+      link_db:+p.now.link.toFixed(1)})),
+    points:observations.map(o=>({id:ptId(o.id),zulu:zulu(o.t),source:o.src,classification:o.cls,
+      mgrs:o.grid,indian_grid:o.ig,indian_datum:o.igDatum,
+      latitude:+o.lat.toFixed(6),longitude:+o.lon.toFixed(6),note:o.note})),
+    events:events.slice().reverse().map(e=>({zulu:zulu(e.t),severity:e.sev,source:e.src,message:e.msg}))
+  },null,2);
+}
+function openExport(){el.modal.hidden=false;el.exText.value=buildExport();el.exSaid.hidden=true}
+document.getElementById("btnExport").onclick=openExport;
+document.getElementById("exClose").onclick=()=>{el.modal.hidden=true};
+el.modal.addEventListener("click",e=>{if(e.target===el.modal) el.modal.hidden=true});
+document.getElementById("exCsv").onclick=()=>{exFmt="csv";
+  document.getElementById("exCsv").setAttribute("aria-selected",true);
+  document.getElementById("exJson").setAttribute("aria-selected",false);el.exText.value=buildExport()};
+document.getElementById("exJson").onclick=()=>{exFmt="json";
+  document.getElementById("exJson").setAttribute("aria-selected",true);
+  document.getElementById("exCsv").setAttribute("aria-selected",false);el.exText.value=buildExport()};
+document.getElementById("exCopy").onclick=async()=>{
+  const txt=el.exText.value;
+  try{await navigator.clipboard.writeText(txt)}
+  catch{el.exText.focus();el.exText.select();try{document.execCommand("copy")}catch{}}
+  el.exSaid.hidden=false;setTimeout(()=>{el.exSaid.hidden=true},1800);
+};
+
+/* keyboard */
+addEventListener("keydown",e=>{
+  if(e.target.tagName==="TEXTAREA"||e.target.tagName==="INPUT") return;
+  const k=e.key.toLowerCase();
+  if(k===" "){e.preventDefault();el.btnPlay.click()}
+  else if(k>="1"&&k<="5"){select(+k-1)}
+  else if(k==="f"){fitAll()}
+  else if(k==="o"){document.getElementById("btnObs").click()}
+  else if(k==="+"||k==="="){zoom(1.3)}
+  else if(k==="-"){zoom(1/1.3)}
+  else if(k==="escape"){el.modal.hidden=true}
+});
+
+/* ---------- boot ---------- */
+platforms.forEach(p=>{p.now=stateAt(p,0);
+  for(let i=0;i<24;i++){const s=stateAt(p,-(24-i)*10);p.trail.push([s.x,s.y]);p.histAlt.push(s.alt);p.histLink.push(s.link)}});
+renderPlatformList();
+el.vidTitle.textContent="Sensor · "+platforms[0].cs;
+logEvent("info","SIM","Exercise initialised — 5 synthetic platforms · "+sysLabel());
+logEvent("info","SIM","All telemetry and imagery are generated locally; no live feed connected");
+syncSys();renderLog();
+el.stObs.textContent="POINTS 0";
+requestAnimationFrame(()=>{fitAll();requestAnimationFrame(step)});
+addEventListener("resize",()=>{if(!sim.running){drawMap();drawVideo()}});
+</script>

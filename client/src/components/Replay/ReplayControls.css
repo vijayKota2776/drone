@@ -1,0 +1,69 @@
+.replay-controls {
+    background: #1a202c;
+    border: 1px solid rgba(99, 179, 237, 0.3);
+    border-radius: 4px;
+    padding: 12px;
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    margin-top: 10px;
+}
+
+.replay-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1px solid #2d3748;
+    padding-bottom: 8px;
+}
+
+.replay-header h3 {
+    margin: 0;
+    color: #63b3ed;
+    font-size: 14px;
+    letter-spacing: 1px;
+}
+
+.exit-btn {
+    background: transparent;
+    border: 1px solid #fc8181;
+    color: #fc8181;
+    padding: 4px 8px;
+    font-size: 12px;
+}
+
+.flight-selector {
+    display: flex;
+    gap: 8px;
+}
+
+.flight-selector select {
+    flex: 1;
+    background: #0d0f14;
+    color: #e2e8f0;
+    border: 1px solid #4a5568;
+    padding: 6px;
+}
+
+.playback-controls {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+}
+
+.playback-controls button {
+    flex: 1;
+}
+
+.speed-control {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+}
+
+.speed-control select {
+    background: #0d0f14;
+    color: #cbd5e0;
+    border: 1px solid #4a5568;
+}

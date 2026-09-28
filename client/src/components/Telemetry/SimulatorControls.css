@@ -1,0 +1,78 @@
+.simulator-controls {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 8px;
+    padding: 16px;
+    margin-top: 16px;
+}
+
+.controls-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 12px;
+}
+
+.controls-header h3 {
+    font-size: 13px;
+    color: #a0aec0;
+    font-weight: 600;
+}
+
+.status-badge {
+    font-size: 11px;
+    padding: 4px 8px;
+    border-radius: 12px;
+    font-weight: 700;
+}
+
+.status-badge.stopped { background: #4a5568; color: #fff; }
+.status-badge.running { background: #48bb78; color: #fff; }
+.status-badge.paused { background: #ecc94b; color: #1a202c; }
+
+.button-group {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 16px;
+}
+
+.button-group button {
+    flex: 1;
+    padding: 8px;
+    border: none;
+    border-radius: 4px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-size: 12px;
+}
+
+.button-group button:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.btn-start { background: rgba(72, 187, 120, 0.2); color: #48bb78; }
+.btn-start:hover:not(:disabled) { background: rgba(72, 187, 120, 0.3); }
+
+.btn-pause { background: rgba(236, 201, 75, 0.2); color: #ecc94b; }
+.btn-pause:hover:not(:disabled) { background: rgba(236, 201, 75, 0.3); }
+
+.btn-reset { background: rgba(245, 101, 101, 0.2); color: #fc8181; }
+.btn-reset:hover:not(:disabled) { background: rgba(245, 101, 101, 0.3); }
+
+.speed-control {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+}
+
+.speed-control label {
+    font-size: 12px;
+    color: #a0aec0;
+}
+
+.speed-control input[type="range"] {
+    width: 100%;
+    accent-color: #63b3ed;
+}
