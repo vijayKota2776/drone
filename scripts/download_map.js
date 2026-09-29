@@ -88,40 +88,29 @@ async function downloadRegion() {
             for (let y = minY; y <= maxY; y++) {
                 await downloadTile(z, x, y);
             }
-        }
-    }
-
-    // 3. Download Entire Rajasthan State (Zoom 8-13)
-    // Bounding box for Rajasthan: 23.0N to 30.2N, 69.4E to 78.3E
-    console.log('Downloading Entire Rajasthan State (Zoom 8-13)...');
-    for (let z = 8; z <= 13; z++) {
-        const minX = lng2tile(69.4, z);
-        const maxX = lng2tile(78.3, z);
-        const minY = lat2tile(30.2, z); // inverted
-        const maxY = lat2tile(23.0, z);
-        
-        for (let x = minX; x <= maxX; x++) {
-            for (let y = minY; y <= maxY; y++) {
-                await downloadTile(z, x, y);
-            }
-        }
-    }
-
-    // 4. Download Ultra High-Res Cities/Targets (Zoom 14-17)
+    // 3. Download High-Res Cities/Targets for Rajasthan & Punjab (Zoom 8-17)
     const cities = [
+        // Rajasthan
         { name: "Jaipur (Rajasthan)", lat: 26.9124, lon: 75.7873 },
         { name: "Jodhpur (Rajasthan)", lat: 26.2389, lon: 73.0243 },
         { name: "Jaisalmer (Rajasthan)", lat: 26.9157, lon: 70.9083 },
         { name: "Udaipur (Rajasthan)", lat: 24.5854, lon: 73.7125 },
         { name: "Bikaner (Rajasthan)", lat: 28.0229, lon: 73.3119 },
         { name: "Pokhran (Rajasthan)", lat: 26.9208, lon: 71.9167 },
+        // Punjab
+        { name: "Amritsar (Punjab)", lat: 31.6340, lon: 74.8723 },
+        { name: "Ludhiana (Punjab)", lat: 30.9010, lon: 75.8573 },
+        { name: "Jalandhar (Punjab)", lat: 31.3260, lon: 75.5762 },
+        { name: "Patiala (Punjab)", lat: 30.3398, lon: 76.3869 },
+        { name: "Pathankot (Punjab)", lat: 32.2643, lon: 75.6503 },
+        // Others
         { name: "Mumbai", lat: 18.9220, lon: 72.8347 },
         { name: "Delhi", lat: 28.6139, lon: 77.2090 }
     ];
 
     for (const city of cities) {
-        console.log(`Downloading Ultra High-Res ${city.name} (Zoom 14-17)...`);
-        for (let z = 14; z <= 17; z++) {
+        console.log(`Downloading High-Res ${city.name} (Zoom 8-17)...`);
+        for (let z = 8; z <= 17; z++) {
             const cx = lng2tile(city.lon, z);
             const cy = lat2tile(city.lat, z);
             
