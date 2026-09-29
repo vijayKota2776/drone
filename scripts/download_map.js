@@ -91,7 +91,23 @@ async function downloadRegion() {
         }
     }
 
-    // 3. Download High-Res Cities (Zoom 8-17)
+    // 3. Download Entire Rajasthan State (Zoom 8-13)
+    // Bounding box for Rajasthan: 23.0N to 30.2N, 69.4E to 78.3E
+    console.log('Downloading Entire Rajasthan State (Zoom 8-13)...');
+    for (let z = 8; z <= 13; z++) {
+        const minX = lng2tile(69.4, z);
+        const maxX = lng2tile(78.3, z);
+        const minY = lat2tile(30.2, z); // inverted
+        const maxY = lat2tile(23.0, z);
+        
+        for (let x = minX; x <= maxX; x++) {
+            for (let y = minY; y <= maxY; y++) {
+                await downloadTile(z, x, y);
+            }
+        }
+    }
+
+    // 4. Download Ultra High-Res Cities/Targets (Zoom 14-17)
     const cities = [
         { name: "Jaipur (Rajasthan)", lat: 26.9124, lon: 75.7873 },
         { name: "Jodhpur (Rajasthan)", lat: 26.2389, lon: 73.0243 },
@@ -104,13 +120,14 @@ async function downloadRegion() {
     ];
 
     for (const city of cities) {
-        console.log(`Downloading High-Res ${city.name} (Zoom 8-17)...`);
-        for (let z = 8; z <= 17; z++) {
+        console.log(`Downloading Ultra High-Res ${city.name} (Zoom 14-17)...`);
+        for (let z = 14; z <= 17; z++) {
             const cx = lng2tile(city.lon, z);
             const cy = lat2tile(city.lat, z);
             
-            for (let dx = -3; dx <= 3; dx++) {
-                for (let dy = -3; dy <= 3; dy++) {
+            // Download a tactical grid around the target
+            for (let dx = -4; dx <= 4; dx++) {
+                for (let dy = -4; dy <= 4; dy++) {
                     await downloadTile(z, cx + dx, cy + dy);
                 }
             }
