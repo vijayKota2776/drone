@@ -88,6 +88,9 @@ async function downloadRegion() {
             for (let y = minY; y <= maxY; y++) {
                 await downloadTile(z, x, y);
             }
+        }
+    }
+
     // 3. Download High-Res Cities/Targets for Rajasthan & Punjab (Zoom 8-17)
     const cities = [
         // Rajasthan
