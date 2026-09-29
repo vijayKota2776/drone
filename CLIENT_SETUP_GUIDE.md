@@ -22,10 +22,11 @@ This software is built using Node.js and Electron to ensure cross-platform compa
    npm install
    cd ..
    ```
-5. **Download Offline Maps:** To populate the local SQLite offline map database with high-resolution imagery, run the map downloader script:
+5. **Download Offline Maps:** To populate the local SQLite offline map database with high-resolution tactical imagery (including Rajasthan: Jaipur, Jodhpur, Jaisalmer, Udaipur, Bikaner, and Pokhran), run the map downloader script:
    ```bash
    node scripts/download_map.js
    ```
+   *(Note: You must have an active internet connection when running this script for the first time. Once it completes, the maps will be stored locally in the `data` folder and can be used strictly offline).*
 
 ### Running the Application:
 To launch the application in development/operational mode, run:

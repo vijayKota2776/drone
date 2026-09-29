@@ -134,7 +134,7 @@ function App() {
         <aside className="panel platform-panel">
           <h2>Platform Panel</h2>
           <div className="panel-content">
-            <ConnectionManager />
+            <ConnectionManager clearTelemetry={() => setTelemetryState(null)} />
             
             <div className="platform-stats">
               <p>Status: {simStatus === 'RUNNING' ? 'Airborne' : 'Offline'}</p>

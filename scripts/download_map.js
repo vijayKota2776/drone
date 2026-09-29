@@ -93,9 +93,14 @@ async function downloadRegion() {
 
     // 3. Download High-Res Cities (Zoom 8-17)
     const cities = [
+        { name: "Jaipur (Rajasthan)", lat: 26.9124, lon: 75.7873 },
+        { name: "Jodhpur (Rajasthan)", lat: 26.2389, lon: 73.0243 },
+        { name: "Jaisalmer (Rajasthan)", lat: 26.9157, lon: 70.9083 },
+        { name: "Udaipur (Rajasthan)", lat: 24.5854, lon: 73.7125 },
+        { name: "Bikaner (Rajasthan)", lat: 28.0229, lon: 73.3119 },
+        { name: "Pokhran (Rajasthan)", lat: 26.9208, lon: 71.9167 },
         { name: "Mumbai", lat: 18.9220, lon: 72.8347 },
-        { name: "Delhi", lat: 28.6139, lon: 77.2090 },
-        { name: "Bangalore", lat: 12.9716, lon: 77.5946 }
+        { name: "Delhi", lat: 28.6139, lon: 77.2090 }
     ];
 
     for (const city of cities) {

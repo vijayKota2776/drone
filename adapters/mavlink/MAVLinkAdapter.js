@@ -1,14 +1,45 @@
 const TelemetrySource = require('../../core/telemetry/TelemetrySource');
 const dgram = require('dgram');
 const { SerialPort } = require('serialport');
+const { MavLinkPacketSplitter, MavLinkPacketParser } = require('node-mavlink');
+const coordinateEngine = require('../../core/coordinates/engine');
 
 class MAVLinkAdapter extends TelemetrySource {
     constructor(platformId = 'MAVLINK-UAV-01') {
         super(platformId);
-        this.mockInterval = null;
         this.connectionType = null;
         this.udpSocket = null;
         this.serialPort = null;
+        
+        this.parser = new MavLinkPacketParser();
+        this.splitter = new MavLinkPacketSplitter();
+        this.splitter.pipe(this.parser);
+        
+        this.parser.on('data', (packet) => {
+            // Very simplified GLOBAL_POSITION_INT (msgid 33) extraction
+            // Real MAVLink apps map full schemas, but for production payload relay
+            // we extract position to feed the COP map.
+            if (packet.header.msgid === 33) {
+                // Parse payload bytes: lat, lon, alt (int32)
+                try {
+                    const lat = packet.protocol.payload.readInt32LE(4) / 1E7;
+                    const lon = packet.protocol.payload.readInt32LE(8) / 1E7;
+                    const alt = packet.protocol.payload.readInt32LE(12) / 1000;
+                    const yaw = packet.protocol.payload.readUInt16LE(26) / 100;
+                    
+                    this.emitTelemetry({
+                        timestamp: Date.now(),
+                        position: { latitude: lat, longitude: lon, altitudeMSL: alt },
+                        attitude: { yaw: yaw, pitch: 0, roll: 0 },
+                        velocity: { groundSpeed: 0 },
+                        status: { armed: true, flightMode: 'UNKNOWN' },
+                        platformId: this.platformId
+                    });
+                } catch (err) {
+                    // Ignore parse errors on partial bytes
+                }
+            }
+        });
     }
 
     connect(config = {}) {
@@ -24,19 +55,14 @@ class MAVLinkAdapter extends TelemetrySource {
 
         this.isConnected = true;
         this.emitStatus('MAVLINK_CONNECTED');
-        
         console.log(`MAVLink Adapter: Connecting via ${this.connectionType}...`);
-
-        // Start emitting mock telemetry for the UI while waiting for real parsing
-        this._startMockTelemetry();
     }
 
     _connectUDP(port, host) {
         this.udpSocket = dgram.createSocket('udp4');
         
         this.udpSocket.on('message', (msg, rinfo) => {
-            // Here is where we would pass 'msg' into a MAVLink parser (node-mavlink)
-            // console.log(`MAVLink UDP Data from ${rinfo.address}:${rinfo.port} - ${msg.length} bytes`);
+            this.splitter.write(msg);
         });
 
         this.udpSocket.on('listening', () => {
@@ -57,8 +83,7 @@ class MAVLinkAdapter extends TelemetrySource {
         });
 
         this.serialPort.on('data', (data) => {
-            // Here is where we would pass 'data' into a MAVLink parser
-            // console.log(`MAVLink Serial Data - ${data.length} bytes`);
+            this.splitter.write(data);
         });
     }
 
@@ -82,24 +107,7 @@ class MAVLinkAdapter extends TelemetrySource {
         console.log('MAVLink Adapter: Disconnected.');
     }
 
-    _startMockTelemetry() {
-        let lat = 18.9220;
-        let lon = 72.8347;
 
-        this.mockInterval = setInterval(() => {
-            if (!this.isConnected) return;
-            lat += 0.00001;
-            lon += 0.00001;
-
-            this.emitTelemetry({
-                timestamp: Date.now(),
-                position: { latitude: lat, longitude: lon, altitudeMSL: 120.0 },
-                attitude: { roll: 0, pitch: 5, yaw: 90 },
-                velocity: { groundSpeed: 10 },
-                status: { armed: true, flightMode: 'GUIDED' }
-            });
-        }, 200);
-    }
 }
 
 module.exports = new MAVLinkAdapter();

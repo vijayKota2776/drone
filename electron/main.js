@@ -89,7 +89,7 @@ const logger = require('../adapters/storage/TelemetryLogger');
 ipcMain.handle('ping', () => 'pong');
 
 const mavlink = require('../adapters/mavlink/MAVLinkAdapter');
-
+const dji = require('../adapters/dji/DJIAdapter');
 let currentTelemetrySource = simulator;
 
 function attachTelemetrySource(source) {
@@ -144,13 +144,26 @@ ipcMain.handle('simulator:loadMission', async (event, missionId) => {
 
 // MAVLink IPCs
 ipcMain.handle('mavlink:connect', (event, config) => {
-  simulator.reset();
   attachTelemetrySource(mavlink);
+  simulator.reset();
   mavlink.connect(config);
   return true;
 });
 ipcMain.handle('mavlink:disconnect', () => {
   mavlink.disconnect();
+  attachTelemetrySource(simulator);
+  return true;
+});
+
+// DJI IPCs
+ipcMain.handle('dji:connect', (event, config) => {
+  attachTelemetrySource(dji);
+  simulator.reset();
+  dji.connect(config);
+  return true;
+});
+ipcMain.handle('dji:disconnect', () => {
+  dji.disconnect();
   attachTelemetrySource(simulator);
   return true;
 });

@@ -1,28 +1,41 @@
 import React, { useState } from 'react';
 import './ConnectionManager.css';
 
-const ConnectionManager = () => {
-    const [connectionType, setConnectionType] = useState('UDP'); // UDP or SERIAL
+const ConnectionManager = ({ clearTelemetry }) => {
+    const [connectionType, setConnectionType] = useState('MAVLINK_UDP'); // Fixed default
     const [udpPort, setUdpPort] = useState(14550);
     const [serialPort, setSerialPort] = useState('/dev/ttyUSB0');
     const [baudRate, setBaudRate] = useState(57600);
     const [isConnected, setIsConnected] = useState(false);
 
-    const handleConnect = async () => {
+    const handleConnectToggle = async () => {
         if (!window.electronAPI) return;
 
         if (isConnected) {
-            await window.electronAPI.disconnectMavlink();
+            if (connectionType === 'DJI_JSON') {
+                await window.electronAPI.disconnectDJI();
+            } else {
+                await window.electronAPI.disconnectMavlink();
+            }
             setIsConnected(false);
+            if (clearTelemetry) clearTelemetry();
         } else {
+            if (clearTelemetry) clearTelemetry();
             const config = { type: connectionType };
-            if (connectionType === 'UDP') {
+            let success = false;
+            
+            if (connectionType === 'MAVLINK_UDP' || connectionType === 'UDP') {
                 config.port = udpPort;
+                success = await window.electronAPI.connectMavlink(config);
+            } else if (connectionType === 'DJI_JSON') {
+                config.port = udpPort;
+                success = await window.electronAPI.connectDJI(config);
             } else {
                 config.path = serialPort;
                 config.baudRate = baudRate;
+                success = await window.electronAPI.connectMavlink(config);
             }
-            const success = await window.electronAPI.connectMavlink(config);
+            
             if (success) {
                 setIsConnected(true);
             }
@@ -38,12 +51,23 @@ const ConnectionManager = () => {
                     <input 
                         type="radio" 
                         name="connType" 
-                        value="UDP" 
-                        checked={connectionType === 'UDP'} 
-                        onChange={() => setConnectionType('UDP')}
+                        value="MAVLINK_UDP" 
+                        checked={connectionType === 'MAVLINK_UDP'} 
+                        onChange={() => setConnectionType('MAVLINK_UDP')}
                         disabled={isConnected}
                     /> 
-                    UDP (Wi-Fi)
+                    MAVLink (UDP)
+                </label>
+                <label>
+                    <input 
+                        type="radio" 
+                        name="connType" 
+                        value="DJI_JSON" 
+                        checked={connectionType === 'DJI_JSON'} 
+                        onChange={() => setConnectionType('DJI_JSON')}
+                        disabled={isConnected}
+                    /> 
+                    DJI SDK (UDP)
                 </label>
                 <label>
                     <input 
@@ -54,11 +78,11 @@ const ConnectionManager = () => {
                         onChange={() => setConnectionType('SERIAL')}
                         disabled={isConnected}
                     /> 
-                    Serial (USB)
+                    Serial
                 </label>
             </div>
 
-            {connectionType === 'UDP' && (
+            {(connectionType === 'MAVLINK_UDP' || connectionType === 'DJI_JSON') && (
                 <div className="connection-settings">
                     <label>Port: 
                         <input 
@@ -100,9 +124,9 @@ const ConnectionManager = () => {
 
             <button 
                 className={`connect-btn ${isConnected ? 'disconnect' : ''}`}
-                onClick={handleConnect}
+                onClick={handleConnectToggle}
             >
-                {isConnected ? 'Disconnect MAVLink' : 'Connect to Drone'}
+                {isConnected ? 'Disconnect Drone' : 'Connect to Drone'}
             </button>
         </div>
     );

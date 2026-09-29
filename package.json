@@ -3,8 +3,16 @@
   "version": "1.0.0",
   "description": "````markdown # Offline ISR Drone Feed & Geospatial COP",
   "main": "electron/main.js",
-  "directories": {
-    "doc": "docs"
+  "build": {
+    "directories": {
+      "output": "dist-electron"
+    },
+    "mac": {
+      "target": "dmg"
+    },
+    "win": {
+      "target": "nsis"
+    }
   },
   "scripts": {
     "start": "cross-env NODE_ENV=production electron .",
@@ -25,6 +33,7 @@
   },
   "dependencies": {
     "better-sqlite3": "^13.0.3",
+    "mavlink-mappings": "^1.0.22-20260311",
     "mgrs": "^2.2.0",
     "node-mavlink": "^2.3.0",
     "serialport": "^13.0.0"

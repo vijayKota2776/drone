@@ -31,6 +31,10 @@ contextBridge.exposeInMainWorld(
     connectMavlink: (config) => ipcRenderer.invoke('mavlink:connect', config),
     disconnectMavlink: () => ipcRenderer.invoke('mavlink:disconnect'),
 
+    // DJI
+    connectDJI: (config) => ipcRenderer.invoke('dji:connect', config),
+    disconnectDJI: () => ipcRenderer.invoke('dji:disconnect'),
+
     // Mission
     saveMission: (name, waypoints) => ipcRenderer.invoke('mission:save', { name, waypoints }),
     getMissions: () => ipcRenderer.invoke('mission:getAll'),

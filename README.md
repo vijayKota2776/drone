@@ -1,7 +1,7 @@
-````markdown
 # Offline ISR Drone Feed & Geospatial COP
 
-> Offline-first Common Operating Picture and geospatial visualization platform for drone/sensor data integration.
+> Offline-first Common Operating Picture and geospatial visualization platform for drone/sensor data integration. 
+> **Version 1.0 Production Release**: Includes real-time hardware adapters for MAVLink (UDP/Serial) and DJI SDK JSON Telemetry.
 
 ---
 

@@ -6,3 +6,4 @@ media/
 *.db
 *.mbtiles
 .DS_Store
+dist-electron/
