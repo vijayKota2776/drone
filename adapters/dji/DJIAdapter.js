@@ -23,14 +23,15 @@ class DJIAdapter extends TelemetrySource {
 
                 const data = JSON.parse(rawJson);
                 
-                // Validate latitude/longitude before accepting packet
-                if (typeof data.latitude !== 'number' || typeof data.longitude !== 'number' || 
-                    data.latitude === 0 || data.longitude === 0) {
-                    return;
+                // Validate latitude/longitude range
+                if (!isFinite(data.latitude) || data.latitude < -90 || data.latitude > 90 ||
+                    !isFinite(data.longitude) || data.longitude < -180 || data.longitude > 180) {
+                    return; // Ignore invalid packets silently without crashing
                 }
 
                 // If this is the first packet or recovering from lost telemetry
                 if (this.status === 'TELEMETRY_LOST' || this.status === 'DJI_CONNECTED') {
+                    this.status = 'TELEMETRY_RESTORED';
                     this.emitStatus('TELEMETRY_RESTORED');
                 }
                 
@@ -44,7 +45,8 @@ class DJIAdapter extends TelemetrySource {
                     position: {
                         latitude: data.latitude,
                         longitude: data.longitude,
-                        altitudeMSL: data.altitude || 0
+                        altitudeMSL: data.altitude || 0,
+                        relativeAltitude: data.relativeAltitude || 0
                     },
                     attitude: {
                         yaw: data.heading || 0,
@@ -52,11 +54,14 @@ class DJIAdapter extends TelemetrySource {
                         roll: 0
                     },
                     velocity: {
-                        speed: groundSpeed
+                        groundSpeed: groundSpeed,
+                        velocityX: data.velocityX || 0,
+                        velocityY: data.velocityY || 0,
+                        velocityZ: data.velocityZ || 0
                     },
                     status: {
                         battery: data.battery || 100,
-                        mode: data.flightState || 'UNKNOWN',
+                        flightMode: data.flightState || 'UNKNOWN',
                         satellites: data.gpsSatellites || 0
                     },
                     platformId: this.platformId,
@@ -74,6 +79,7 @@ class DJIAdapter extends TelemetrySource {
         this.udpSocket.on('listening', () => {
             console.log(`DJI Adapter listening on UDP ${config.host || '0.0.0.0'}:${config.port}`);
             this.isConnected = true;
+            this.status = 'DJI_CONNECTED';
             this.emitStatus('DJI_CONNECTED');
             this.resetTimeout();
         });
@@ -112,6 +118,7 @@ class DJIAdapter extends TelemetrySource {
             this.udpSocket = null;
         }
         this.isConnected = false;
+        this.status = 'DJI_DISCONNECTED';
         this.emitStatus('DJI_DISCONNECTED');
         console.log('DJI Adapter Disconnected');
     }

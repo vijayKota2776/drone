@@ -31,6 +31,7 @@ class TelemetrySource extends EventEmitter {
                 latitude: data.position?.latitude || 0,
                 longitude: data.position?.longitude || 0,
                 altitudeMSL: data.position?.altitudeMSL || 0,
+                relativeAltitude: data.position?.relativeAltitude || 0,
                 gridReference: data.position?.gridReference || (data.position?.latitude && data.position?.longitude ? mgrs.forward([data.position.longitude, data.position.latitude]) : null)
             },
             attitude: {
@@ -39,12 +40,17 @@ class TelemetrySource extends EventEmitter {
                 yaw: data.attitude?.yaw || 0
             },
             velocity: {
-                groundSpeed: data.velocity?.groundSpeed || 0
+                groundSpeed: data.velocity?.groundSpeed || 0,
+                velocityX: data.velocity?.velocityX || 0,
+                velocityY: data.velocity?.velocityY || 0,
+                velocityZ: data.velocity?.velocityZ || 0
             },
             status: {
                 connected: this.isConnected,
                 armed: data.status?.armed || false,
-                flightMode: data.status?.flightMode || 'UNKNOWN'
+                flightMode: data.status?.flightMode || 'UNKNOWN',
+                battery: data.status?.battery || null,
+                satellites: data.status?.satellites || null
             }
         };
 
