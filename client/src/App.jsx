@@ -137,7 +137,7 @@ function App() {
             <ConnectionManager clearTelemetry={() => setTelemetryState(null)} />
             
             <div className="platform-stats">
-              <p>Status: {simStatus === 'RUNNING' ? 'Airborne' : 'Offline'}</p>
+              <p>Status: {simStatus === 'RUNNING' ? 'Airborne (Sim)' : (telemetryState ? 'Connected' : 'Offline')}</p>
               <p>Lat: {telemetryState ? telemetryState.position.latitude.toFixed(6) : '--'}</p>
               <p>Lon: {telemetryState ? telemetryState.position.longitude.toFixed(6) : '--'}</p>
               <p>Alt: {telemetryState ? telemetryState.position.altitudeMSL.toFixed(1) : '--'}</p>
@@ -220,8 +220,8 @@ function App() {
           <span>Video: None</span>
         </div>
         <div className="status-indicator">
-          <div className={`status-dot ${simStatus === 'RUNNING' ? '' : 'error'}`}></div>
-          <span>Telemetry: {simStatus === 'RUNNING' ? 'Connected (SIM)' : 'Disconnected'}</span>
+          <div className={`status-dot ${simStatus === 'RUNNING' || telemetryState ? '' : 'error'}`}></div>
+          <span>Telemetry: {simStatus === 'RUNNING' ? 'Connected (SIM)' : (telemetryState ? 'Connected (Hardware)' : 'Disconnected')}</span>
         </div>
       </footer>
     </div>

@@ -16,16 +16,27 @@ class MAVLinkAdapter extends TelemetrySource {
         this.splitter.pipe(this.parser);
         
         this.parser.on('data', (packet) => {
-            // Very simplified GLOBAL_POSITION_INT (msgid 33) extraction
-            // Real MAVLink apps map full schemas, but for production payload relay
-            // we extract position to feed the COP map.
+            // Log received message IDs for debugging
+            if (!this.lastLogTime || Date.now() - this.lastLogTime > 5000) {
+                console.log(`MAVLink Adapter: Received packet with msgid ${packet.header.msgid}`);
+                this.lastLogTime = Date.now();
+            }
+
+            // Extract heartbeat (msgid 0) to show online status even without GPS
+            if (packet.header.msgid === 0) {
+                this.emitStatus('MAVLINK_ACTIVE');
+            }
+
             if (packet.header.msgid === 33) {
                 // Parse payload bytes: lat, lon, alt (int32)
                 try {
-                    const lat = packet.protocol.payload.readInt32LE(4) / 1E7;
-                    const lon = packet.protocol.payload.readInt32LE(8) / 1E7;
-                    const alt = packet.protocol.payload.readInt32LE(12) / 1000;
-                    const yaw = packet.protocol.payload.readUInt16LE(26) / 100;
+                    const payload = packet.payload || packet.protocol?.payload || packet.buffer;
+                    if (!payload) return;
+                    
+                    const lat = payload.readInt32LE(4) / 1E7;
+                    const lon = payload.readInt32LE(8) / 1E7;
+                    const alt = payload.readInt32LE(12) / 1000;
+                    const yaw = payload.readUInt16LE(26) / 100;
                     
                     this.emitTelemetry({
                         timestamp: Date.now(),
@@ -36,7 +47,7 @@ class MAVLinkAdapter extends TelemetrySource {
                         platformId: this.platformId
                     });
                 } catch (err) {
-                    // Ignore parse errors on partial bytes
+                    console.error('Error parsing MAVLink msg 33:', err.message);
                 }
             }
         });
