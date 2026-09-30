@@ -139,8 +139,9 @@ function App() {
             <div className="platform-stats">
               <p>Status: {
                 simStatus === 'RUNNING' ? 'Airborne (Sim)' : 
+                simStatus === 'TELEMETRY_LOST' ? 'Telemetry Lost' :
                 telemetryState ? 'Connected (GPS Lock)' : 
-                (simStatus === 'MAVLINK_ACTIVE' || simStatus === 'MAVLINK_CONNECTED') ? 'Connected (Awaiting GPS)' : 'Offline'
+                (simStatus === 'MAVLINK_ACTIVE' || simStatus === 'MAVLINK_CONNECTED' || simStatus === 'DJI_CONNECTED' || simStatus === 'TELEMETRY_RESTORED') ? 'Connected (Awaiting GPS)' : 'Offline'
               }</p>
               <p>Lat: {telemetryState ? telemetryState.position.latitude.toFixed(6) : '--'}</p>
               <p>Lon: {telemetryState ? telemetryState.position.longitude.toFixed(6) : '--'}</p>
@@ -224,8 +225,13 @@ function App() {
           <span>Video: None</span>
         </div>
         <div className="status-indicator">
-          <div className={`status-dot ${simStatus === 'RUNNING' || telemetryState || (simStatus && simStatus.startsWith('MAVLINK')) ? '' : 'error'}`}></div>
-          <span>Telemetry: {simStatus === 'RUNNING' ? 'Connected (SIM)' : (telemetryState ? 'Connected (Hardware)' : (simStatus && simStatus.startsWith('MAVLINK') ? 'Connected (Awaiting GPS)' : 'Disconnected'))}</span>
+          <div className={`status-dot ${simStatus === 'TELEMETRY_LOST' ? 'error' : (simStatus === 'RUNNING' || telemetryState || (simStatus && (simStatus.startsWith('MAVLINK') || simStatus.startsWith('DJI') || simStatus === 'TELEMETRY_RESTORED'))) ? '' : 'error'}`}></div>
+          <span>Telemetry: {
+            simStatus === 'RUNNING' ? 'Connected (SIM)' : 
+            simStatus === 'TELEMETRY_LOST' ? 'Lost (Timeout)' :
+            (telemetryState ? 'Connected (Hardware)' : 
+            (simStatus && (simStatus.startsWith('MAVLINK') || simStatus.startsWith('DJI') || simStatus === 'TELEMETRY_RESTORED') ? 'Connected (Awaiting GPS)' : 'Disconnected'))
+          }</span>
         </div>
       </footer>
     </div>

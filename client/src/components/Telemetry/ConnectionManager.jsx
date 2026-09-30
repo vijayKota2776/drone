@@ -3,7 +3,9 @@ import './ConnectionManager.css';
 
 const ConnectionManager = ({ clearTelemetry }) => {
     const [connectionType, setConnectionType] = useState('MAVLINK_UDP'); // Fixed default
+    const [udpHost, setUdpHost] = useState('0.0.0.0');
     const [udpPort, setUdpPort] = useState(14550);
+    const [timeoutMs, setTimeoutMs] = useState(3000);
     const [serialPort, setSerialPort] = useState('/dev/ttyUSB0');
     const [baudRate, setBaudRate] = useState(57600);
     const [isConnected, setIsConnected] = useState(false);
@@ -25,10 +27,13 @@ const ConnectionManager = ({ clearTelemetry }) => {
             let success = false;
             
             if (connectionType === 'MAVLINK_UDP' || connectionType === 'UDP') {
+                config.host = udpHost;
                 config.port = udpPort;
                 success = await window.electronAPI.connectMavlink(config);
             } else if (connectionType === 'DJI_JSON') {
+                config.host = udpHost;
                 config.port = udpPort;
+                config.timeout = timeoutMs;
                 success = await window.electronAPI.connectDJI(config);
             } else {
                 config.path = serialPort;
@@ -84,6 +89,15 @@ const ConnectionManager = ({ clearTelemetry }) => {
 
             {(connectionType === 'MAVLINK_UDP' || connectionType === 'DJI_JSON') && (
                 <div className="connection-settings">
+                    <label>IP: 
+                        <input 
+                            type="text" 
+                            value={udpHost} 
+                            onChange={e => setUdpHost(e.target.value)} 
+                            disabled={isConnected} 
+                            className="input-field"
+                        />
+                    </label>
                     <label>Port: 
                         <input 
                             type="number" 
@@ -93,6 +107,17 @@ const ConnectionManager = ({ clearTelemetry }) => {
                             className="input-field"
                         />
                     </label>
+                    {connectionType === 'DJI_JSON' && (
+                        <label>Timeout (ms): 
+                            <input 
+                                type="number" 
+                                value={timeoutMs} 
+                                onChange={e => setTimeoutMs(parseInt(e.target.value))} 
+                                disabled={isConnected} 
+                                className="input-field"
+                            />
+                        </label>
+                    )}
                 </div>
             )}
 
