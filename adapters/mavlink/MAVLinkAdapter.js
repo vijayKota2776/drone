@@ -109,7 +109,9 @@ class MAVLinkAdapter extends TelemetrySource {
         }
         
         if (this.serialPort) {
-            this.serialPort.close();
+            if (this.serialPort.isOpen) {
+                this.serialPort.close();
+            }
             this.serialPort = null;
         }
 
