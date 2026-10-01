@@ -115,12 +115,6 @@ class ReplayEngine extends EventEmitter {
                 battery: raw.battery_percent !== null ? raw.battery_percent : undefined,
                 flightMode: raw.flight_state !== null ? raw.flight_state : undefined,
                 flying: raw.flying !== null ? (raw.flying === 1) : undefined
-            },
-            sensor: {
-                azimuth: 0,
-                elevation: -45,
-                hfov: 30,
-                vfov: 20
             }
         };
 
