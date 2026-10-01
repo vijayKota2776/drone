@@ -76,23 +76,55 @@ db.exec(`
   );
 `);
 
-// Attempt to add columns to existing table if it was created before
-const addCol = (col, type) => { try { db.exec(`ALTER TABLE telemetry ADD COLUMN ${col} ${type};`); } catch(e) {} };
-addCol('flight_id', 'TEXT');
-addCol('platform_id', 'TEXT');
-addCol('altitude_m', 'REAL');
-addCol('relative_altitude_m', 'REAL');
-addCol('heading_deg', 'REAL');
-addCol('yaw_deg', 'REAL');
-addCol('pitch_deg', 'REAL');
-addCol('roll_deg', 'REAL');
-addCol('speed_mps', 'REAL');
-addCol('velocity_x_mps', 'REAL');
-addCol('velocity_y_mps', 'REAL');
-addCol('velocity_z_mps', 'REAL');
-addCol('gps_satellites', 'INTEGER');
-addCol('battery_percent', 'INTEGER');
-addCol('flight_state', 'TEXT');
-addCol('flying', 'INTEGER');
+// True SQLite Migration for existing databases
+const tableInfo = db.pragma('table_info(telemetry)');
+const columns = tableInfo.map(c => c.name);
+
+if (columns.includes('flightId') && !columns.includes('flight_id')) {
+    console.log("Migrating telemetry table to canonical snake_case schema...");
+    db.exec(`
+        BEGIN TRANSACTION;
+        
+        CREATE TABLE telemetry_new (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            flight_id TEXT,
+            timestamp INTEGER NOT NULL,
+            platform_id TEXT NOT NULL,
+            latitude REAL NOT NULL,
+            longitude REAL NOT NULL,
+            altitude_m REAL NOT NULL,
+            relative_altitude_m REAL,
+            heading_deg REAL,
+            yaw_deg REAL,
+            pitch_deg REAL,
+            roll_deg REAL,
+            speed_mps REAL,
+            velocity_x_mps REAL,
+            velocity_y_mps REAL,
+            velocity_z_mps REAL,
+            gps_satellites INTEGER,
+            battery_percent INTEGER,
+            flight_state TEXT,
+            flying INTEGER
+        );
+        
+        INSERT INTO telemetry_new (
+            id, flight_id, timestamp, platform_id, latitude, longitude, altitude_m, relative_altitude_m,
+            yaw_deg, pitch_deg, roll_deg, speed_mps, velocity_x_mps, velocity_y_mps, velocity_z_mps,
+            gps_satellites, battery_percent, flight_state, flying
+        )
+        SELECT 
+            id, flightId, timestamp, platformId, latitude, longitude, altitude, relativeAltitude,
+            yaw, pitch, roll, groundSpeed, velocityX, velocityY, velocityZ,
+            satellites, battery, flightState, flying
+        FROM telemetry;
+        
+        DROP TABLE telemetry;
+        ALTER TABLE telemetry_new RENAME TO telemetry;
+        
+        COMMIT;
+    `);
+    console.log("Migration complete.");
+}
 
 module.exports = db;

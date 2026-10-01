@@ -60,7 +60,8 @@ class DJIAdapter extends TelemetrySource {
                         relativeAltitude: data.relative_altitude_m !== undefined ? data.relative_altitude_m : (data.relativeAltitude !== undefined ? data.relativeAltitude : null)
                     },
                     attitude: {
-                        yaw: data.yaw_deg !== undefined ? data.yaw_deg : (data.heading_deg !== undefined ? data.heading_deg : (data.heading !== undefined ? data.heading : null)),
+                        yaw: data.yaw_deg !== undefined ? data.yaw_deg : null,
+                        heading: data.heading_deg !== undefined ? data.heading_deg : null,
                         pitch: data.pitch_deg !== undefined ? data.pitch_deg : null,
                         roll: data.roll_deg !== undefined ? data.roll_deg : null
                     },

@@ -102,7 +102,8 @@ class ReplayEngine extends EventEmitter {
             attitude: {
                 roll: raw.roll_deg !== null ? raw.roll_deg : undefined,
                 pitch: raw.pitch_deg !== null ? raw.pitch_deg : undefined,
-                yaw: raw.yaw_deg !== null ? raw.yaw_deg : (raw.heading_deg !== null ? raw.heading_deg : undefined)
+                yaw: raw.yaw_deg !== null ? raw.yaw_deg : undefined,
+                heading: raw.heading_deg !== null ? raw.heading_deg : undefined
             },
             velocity: {
                 groundSpeed: raw.speed_mps !== null ? raw.speed_mps : undefined,

@@ -7,3 +7,4 @@ media/
 *.mbtiles
 .DS_Store
 dist-electron/
+android-dji-bridge/.gradle/

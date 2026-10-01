@@ -37,7 +37,8 @@ class TelemetrySource extends EventEmitter {
             attitude: {
                 roll: data.attitude?.roll !== undefined ? data.attitude.roll : null,
                 pitch: data.attitude?.pitch !== undefined ? data.attitude.pitch : null,
-                yaw: data.attitude?.yaw !== undefined ? data.attitude.yaw : null
+                yaw: data.attitude?.yaw !== undefined ? data.attitude.yaw : null,
+                heading: data.attitude?.heading !== undefined ? data.attitude.heading : null
             },
             velocity: {
                 groundSpeed: data.velocity?.groundSpeed !== undefined ? data.velocity.groundSpeed : null,
