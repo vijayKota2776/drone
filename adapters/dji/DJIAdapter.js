@@ -43,12 +43,12 @@ class DJIAdapter extends TelemetrySource {
                 }
                 
                 // Calculate ground speed from velocityX and velocityY if available
-                let groundSpeed = 0;
-                let velX = data.velocity_x_mps !== undefined ? data.velocity_x_mps : (data.velocityX || 0);
-                let velY = data.velocity_y_mps !== undefined ? data.velocity_y_mps : (data.velocityY || 0);
-                let velZ = data.velocity_z_mps !== undefined ? data.velocity_z_mps : (data.velocityZ || 0);
+                let velX = data.velocity_x_mps !== undefined ? data.velocity_x_mps : (data.velocityX !== undefined ? data.velocityX : null);
+                let velY = data.velocity_y_mps !== undefined ? data.velocity_y_mps : (data.velocityY !== undefined ? data.velocityY : null);
+                let velZ = data.velocity_z_mps !== undefined ? data.velocity_z_mps : (data.velocityZ !== undefined ? data.velocityZ : null);
                 
-                if (velX !== 0 || velY !== 0) {
+                let groundSpeed = null;
+                if (velX !== null && velY !== null) {
                     groundSpeed = Math.sqrt(velX**2 + velY**2);
                 }
 
@@ -56,13 +56,13 @@ class DJIAdapter extends TelemetrySource {
                     position: {
                         latitude: data.latitude,
                         longitude: data.longitude,
-                        altitudeMSL: data.altitude_m !== undefined ? data.altitude_m : (data.altitude || 0),
-                        relativeAltitude: data.relative_altitude_m !== undefined ? data.relative_altitude_m : (data.relativeAltitude || 0)
+                        altitudeMSL: data.altitude_m !== undefined ? data.altitude_m : (data.altitude !== undefined ? data.altitude : null),
+                        relativeAltitude: data.relative_altitude_m !== undefined ? data.relative_altitude_m : (data.relativeAltitude !== undefined ? data.relativeAltitude : null)
                     },
                     attitude: {
-                        yaw: data.yaw_deg !== undefined ? data.yaw_deg : (data.heading_deg || data.heading || 0),
-                        pitch: data.pitch_deg || 0,
-                        roll: data.roll_deg || 0
+                        yaw: data.yaw_deg !== undefined ? data.yaw_deg : (data.heading_deg !== undefined ? data.heading_deg : (data.heading !== undefined ? data.heading : null)),
+                        pitch: data.pitch_deg !== undefined ? data.pitch_deg : null,
+                        roll: data.roll_deg !== undefined ? data.roll_deg : null
                     },
                     velocity: {
                         groundSpeed: data.speed_mps !== undefined ? data.speed_mps : groundSpeed,
@@ -71,12 +71,14 @@ class DJIAdapter extends TelemetrySource {
                         velocityZ: velZ
                     },
                     status: {
-                        battery: data.battery_percent !== undefined ? data.battery_percent : (data.battery || 100),
-                        flightMode: data.flight_state || data.flightState || 'UNKNOWN',
-                        satellites: data.gps_satellites !== undefined ? data.gps_satellites : (data.gpsSatellites || 0)
+                        battery: data.battery_percent !== undefined ? data.battery_percent : (data.battery !== undefined ? data.battery : null),
+                        flightMode: data.flight_state !== undefined ? data.flight_state : (data.flightState !== undefined ? data.flightState : null),
+                        satellites: data.gps_satellites !== undefined ? data.gps_satellites : (data.gpsSatellites !== undefined ? data.gpsSatellites : null),
+                        flying: data.flying !== undefined ? data.flying : null,
+                        armed: null // DJI UDP source does not provide a reliable armed state
                     },
-                    platformId: data.drone_id || this.platformId,
-                    timestamp: data.timestamp || Date.now()
+                    platformId: data.drone_id !== undefined ? data.drone_id : this.platformId,
+                    timestamp: data.timestamp !== undefined ? data.timestamp : Date.now()
                 });
 
                 this.resetTimeout();

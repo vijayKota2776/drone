@@ -172,10 +172,10 @@ public class MainActivity extends Activity {
     private void updateUIDebug(TelemetryData data) {
         runOnUiThread(() -> {
             telemetryText.setText(
-                String.format("Destination: %s:%s\nPackets Sent: %d\nLast Packet: %d\n\nLAT: %.6f\nLON: %.6f\nALT: %.1f\nHEADING: %.1f\nYAW: %.1f\nPITCH: %.1f\nROLL: %.1f\nSPEED: %.1f\nGPS: %d\nBATTERY: %d",
+                String.format("Destination: %s:%s\nPackets Sent: %d\nLast Packet: %d\n\nLAT: %.6f\nLON: %.6f\nALT: %.1f\nREL_ALT: %.1f\nHEADING: %.1f\nYAW: %.1f\nPITCH: %.1f\nROLL: %.1f\nSPEED: %.1f\nGPS: %d\nBATTERY: %d",
                     ipInput.getText().toString(), portInput.getText().toString(),
                     exporter.packetsSent.get(), data.timestamp,
-                    data.lat, data.lon, data.altitude_m,
+                    data.lat, data.lon, data.altitude_m, data.relative_altitude_m,
                     data.heading_deg, data.yaw_deg, data.pitch_deg, data.roll_deg,
                     data.speed_mps, data.gps_satellites, data.battery)
             );

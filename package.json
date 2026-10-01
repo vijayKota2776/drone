@@ -18,7 +18,7 @@
     "start": "cross-env NODE_ENV=production electron .",
     "dev": "cross-env NODE_ENV=development concurrently \"cd client && npm run dev\" \"wait-on tcp:5173 && electron .\"",
     "build": "cd client && npm run build && cd .. && electron-builder",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "node tests/dji.test.js"
   },
   "keywords": [],
   "author": "",
