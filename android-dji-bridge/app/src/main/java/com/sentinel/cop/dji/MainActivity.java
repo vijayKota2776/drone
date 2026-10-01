@@ -11,6 +11,11 @@ import com.sentinel.cop.dji.telemetry.TelemetryData;
 import com.sentinel.cop.dji.telemetry.TelemetryManager;
 import com.sentinel.cop.dji.telemetry.TelemetryUdpExporter;
 
+import android.Manifest;
+import android.content.pm.PackageManager;
+import java.util.ArrayList;
+import java.util.List;
+
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
 import dji.sdk.base.BaseComponent;
@@ -52,7 +57,45 @@ public class MainActivity extends Activity {
         startButton.setOnClickListener(v -> toggleTransmission());
         testButton.setOnClickListener(v -> sendStaticTestPacket());
 
-        registerDJISDK();
+        checkAndRequestPermissions();
+    }
+    
+    private static final String[] REQUIRED_PERMISSION_LIST = new String[]{
+            Manifest.permission.VIBRATE,
+            Manifest.permission.INTERNET,
+            Manifest.permission.ACCESS_WIFI_STATE,
+            Manifest.permission.WAKE_LOCK,
+            Manifest.permission.ACCESS_COARSE_LOCATION,
+            Manifest.permission.ACCESS_NETWORK_STATE,
+            Manifest.permission.ACCESS_FINE_LOCATION,
+            Manifest.permission.CHANGE_WIFI_STATE,
+            Manifest.permission.WRITE_EXTERNAL_STORAGE,
+            Manifest.permission.BLUETOOTH,
+            Manifest.permission.BLUETOOTH_ADMIN,
+            Manifest.permission.READ_EXTERNAL_STORAGE,
+            Manifest.permission.READ_PHONE_STATE,
+    };
+
+    private void checkAndRequestPermissions() {
+        List<String> missingPermission = new ArrayList<>();
+        for (String eachPermission : REQUIRED_PERMISSION_LIST) {
+            if (checkSelfPermission(eachPermission) != PackageManager.PERMISSION_GRANTED) {
+                missingPermission.add(eachPermission);
+            }
+        }
+        if (missingPermission.isEmpty()) {
+            registerDJISDK();
+        } else {
+            requestPermissions(missingPermission.toArray(new String[0]), 12345);
+        }
+    }
+
+    @Override
+    public void onRequestPermissionsResult(int requestCode, String[] permissions, int[] grantResults) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults);
+        if (requestCode == 12345) {
+            registerDJISDK();
+        }
     }
 
     private void registerDJISDK() {

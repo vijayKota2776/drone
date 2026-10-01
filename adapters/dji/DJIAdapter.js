@@ -23,6 +23,12 @@ class DJIAdapter extends TelemetrySource {
 
                 const data = JSON.parse(rawJson);
                 
+                // Validate schema version
+                if (data.schema_version !== 1) {
+                    console.warn(`Unsupported schema version: ${data.schema_version}`);
+                    return;
+                }
+
                 // Validate latitude/longitude range
                 if (!isFinite(data.latitude) || data.latitude < -90 || data.latitude > 90 ||
                     !isFinite(data.longitude) || data.longitude < -180 || data.longitude > 180) {
@@ -30,9 +36,9 @@ class DJIAdapter extends TelemetrySource {
                 }
 
                 // If this is the first packet or recovering from lost telemetry
-                if (this.status === 'TELEMETRY_LOST' || this.status === 'DJI_CONNECTED') {
-                    this.status = 'TELEMETRY_RESTORED';
-                    this.emitStatus('TELEMETRY_RESTORED');
+                if (this.status !== 'TELEMETRY_RECEIVED') {
+                    this.status = 'TELEMETRY_RECEIVED';
+                    this.emitStatus('TELEMETRY_RECEIVED');
                 }
                 
                 // Calculate ground speed from velocityX and velocityY if available
@@ -83,8 +89,8 @@ class DJIAdapter extends TelemetrySource {
         this.udpSocket.on('listening', () => {
             console.log(`DJI Adapter listening on UDP ${config.host || '0.0.0.0'}:${config.port}`);
             this.isConnected = true;
-            this.status = 'DJI_CONNECTED';
-            this.emitStatus('DJI_CONNECTED');
+            this.status = 'UDP_LISTENER_ACTIVE';
+            this.emitStatus('UDP_LISTENER_ACTIVE');
             this.resetTimeout();
         });
 
@@ -122,8 +128,8 @@ class DJIAdapter extends TelemetrySource {
             this.udpSocket = null;
         }
         this.isConnected = false;
-        this.status = 'DJI_DISCONNECTED';
-        this.emitStatus('DJI_DISCONNECTED');
+        this.status = 'DISCONNECTED';
+        this.emitStatus('DISCONNECTED');
         console.log('DJI Adapter Disconnected');
     }
 }
