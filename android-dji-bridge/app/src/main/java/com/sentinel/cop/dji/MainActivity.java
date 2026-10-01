@@ -7,16 +7,12 @@ import android.widget.Button;
 import android.widget.EditText;
 import android.widget.TextView;
 
-import org.json.JSONObject;
+import com.sentinel.cop.dji.telemetry.TelemetryData;
+import com.sentinel.cop.dji.telemetry.TelemetryManager;
+import com.sentinel.cop.dji.telemetry.TelemetryUdpExporter;
 
-import java.net.DatagramPacket;
-import java.net.DatagramSocket;
-import java.net.InetAddress;
-
-import dji.common.battery.BatteryState;
 import dji.common.error.DJIError;
 import dji.common.error.DJISDKError;
-import dji.common.flightcontroller.FlightControllerState;
 import dji.sdk.base.BaseComponent;
 import dji.sdk.base.BaseProduct;
 import dji.sdk.flightcontroller.FlightController;
@@ -25,17 +21,16 @@ import dji.sdk.sdkmanager.DJISDKInitEvent;
 import dji.sdk.sdkmanager.DJISDKManager;
 
 public class MainActivity extends Activity {
-    private static final String TAG = "DJI_TELEMETRY";
+    private static final String TAG = "DJI_MAIN";
     
     private TextView djiStatusText, aircraftStatusText, udpStatusText;
     private TextView telemetryText;
     private EditText ipInput, portInput;
-    private Button startButton;
+    private Button startButton, testButton;
     
-    private DatagramSocket udpSocket;
+    private TelemetryUdpExporter exporter;
+    private TelemetryManager telemetryManager;
     private boolean isTransmitting = false;
-    
-    private int currentBattery = -1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,27 +44,37 @@ public class MainActivity extends Activity {
         ipInput = findViewById(R.id.ip_input);
         portInput = findViewById(R.id.port_input);
         startButton = findViewById(R.id.start_button);
+        testButton = findViewById(R.id.test_button);
+        
+        exporter = new TelemetryUdpExporter();
+        telemetryManager = new TelemetryManager(exporter);
         
         startButton.setOnClickListener(v -> toggleTransmission());
+        testButton.setOnClickListener(v -> sendStaticTestPacket());
 
         registerDJISDK();
     }
 
     private void registerDJISDK() {
+        Log.i(TAG, "[DJI] SDK registration started");
         djiStatusText.setText("DJI SDK: REGISTERING...");
+        
         DJISDKManager.getInstance().registerApp(this, new DJISDKManager.SDKManagerCallback() {
             @Override
             public void onRegister(DJIError djiError) {
                 if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
+                    Log.i(TAG, "[DJI] SDK registration successful");
                     DJISDKManager.getInstance().startConnectionToProduct();
                     runOnUiThread(() -> djiStatusText.setText("DJI SDK: CONNECTED"));
                 } else {
+                    Log.e(TAG, "[DJI] SDK registration failed: " + djiError.getDescription());
                     runOnUiThread(() -> djiStatusText.setText("DJI SDK: ERROR - " + djiError.getDescription()));
                 }
             }
 
             @Override
             public void onProductDisconnect() {
+                Log.i(TAG, "[DJI] Product disconnected");
                 runOnUiThread(() -> {
                     aircraftStatusText.setText("Aircraft: DISCONNECTED");
                     telemetryText.setText("No Telemetry");
@@ -78,7 +83,9 @@ public class MainActivity extends Activity {
 
             @Override
             public void onProductConnect(BaseProduct baseProduct) {
+                Log.i(TAG, "[DJI] Product connected");
                 if (baseProduct instanceof Aircraft) {
+                    Log.i(TAG, "[DJI] Aircraft connected");
                     runOnUiThread(() -> aircraftStatusText.setText("Aircraft: CONNECTED"));
                     setupTelemetryListeners((Aircraft) baseProduct);
                 }
@@ -98,16 +105,34 @@ public class MainActivity extends Activity {
     private void setupTelemetryListeners(Aircraft aircraft) {
         if (aircraft.getBattery() != null) {
             aircraft.getBattery().setStateCallback(batteryState -> {
-                currentBattery = batteryState.getChargeRemainingInPercent();
+                telemetryManager.updateBattery(batteryState);
             });
         }
 
         FlightController flightController = aircraft.getFlightController();
         if (flightController != null) {
             flightController.setStateCallback(state -> {
-                sendTelemetry(state);
+                if (isTransmitting) {
+                    TelemetryData data = telemetryManager.updateFlightState(state);
+                    if (data != null && exporter.packetsSent % 10 == 0) {
+                        updateUIDebug(data);
+                    }
+                }
             });
         }
+    }
+    
+    private void updateUIDebug(TelemetryData data) {
+        runOnUiThread(() -> {
+            telemetryText.setText(
+                String.format("Destination: %s:%s\nPackets Sent: %d\nLast Packet: %d\n\nLAT: %.6f\nLON: %.6f\nALT: %.1f\nHEADING: %.1f\nYAW: %.1f\nPITCH: %.1f\nROLL: %.1f\nSPEED: %.1f\nGPS: %d\nBATTERY: %d",
+                    ipInput.getText().toString(), portInput.getText().toString(),
+                    exporter.packetsSent, data.timestamp,
+                    data.lat, data.lon, data.altitude_m,
+                    data.heading_deg, data.yaw_deg, data.pitch_deg, data.roll_deg,
+                    data.speed_mps, data.gps_satellites, data.battery)
+            );
+        });
     }
 
     private void toggleTransmission() {
@@ -116,67 +141,26 @@ public class MainActivity extends Activity {
             startButton.setText("START UDP");
             udpStatusText.setText("UDP: NOT CONFIGURED");
         } else {
+            exporter.setDestination(ipInput.getText().toString(), Integer.parseInt(portInput.getText().toString()));
             isTransmitting = true;
             startButton.setText("STOP UDP");
             udpStatusText.setText("UDP: CONNECTED");
+            Log.i(TAG, "[UDP] destination=" + ipInput.getText().toString() + ":" + portInput.getText().toString());
         }
     }
+    
+    private void sendStaticTestPacket() {
+        exporter.setDestination(ipInput.getText().toString(), Integer.parseInt(portInput.getText().toString()));
+        exporter.sendTestPacket();
+        udpStatusText.setText("UDP: TEST PACKET SENT");
+        Log.i(TAG, "[UDP] Test packet sent");
+    }
 
-    private void sendTelemetry(FlightControllerState state) {
-        if (!isTransmitting) return;
-
-        try {
-            double lat = state.getAircraftLocation().getLatitude();
-            double lon = state.getAircraftLocation().getLongitude();
-            
-            if (Double.isNaN(lat) || Double.isNaN(lon) || lat == 0 || lon == 0) return;
-
-            JSONObject packet = new JSONObject();
-            packet.put("timestamp", System.currentTimeMillis());
-            packet.put("latitude", lat);
-            packet.put("longitude", lon);
-            packet.put("altitude", state.getAircraftLocation().getAltitude());
-            packet.put("relativeAltitude", state.getAircraftLocation().getAltitude());
-            packet.put("heading", state.getAttitude().yaw);
-            packet.put("velocityX", state.getVelocityX());
-            packet.put("velocityY", state.getVelocityY());
-            packet.put("velocityZ", state.getVelocityZ());
-            packet.put("gpsSatellites", state.getSatelliteCount());
-            packet.put("flightState", state.getFlightMode().name());
-            packet.put("battery", currentBattery);
-
-            String jsonString = packet.toString();
-            
-            runOnUiThread(() -> {
-                telemetryText.setText(
-                    "Lat: " + lat + "\n" +
-                    "Lon: " + lon + "\n" +
-                    "Alt: " + state.getAircraftLocation().getAltitude() + "\n" +
-                    "Heading: " + state.getAttitude().yaw + "\n" +
-                    "Battery: " + currentBattery + "%\n" +
-                    "Sats: " + state.getSatelliteCount()
-                );
-            });
-
-            String ip = ipInput.getText().toString();
-            int port = Integer.parseInt(portInput.getText().toString());
-
-            new Thread(() -> {
-                try {
-                    if (udpSocket == null || udpSocket.isClosed()) {
-                        udpSocket = new DatagramSocket();
-                    }
-                    InetAddress address = InetAddress.getByName(ip);
-                    byte[] buf = jsonString.getBytes();
-                    DatagramPacket datagram = new DatagramPacket(buf, buf.length, address, port);
-                    udpSocket.send(datagram);
-                } catch (Exception e) {
-                    Log.e(TAG, "UDP Send Error", e);
-                }
-            }).start();
-
-        } catch (Exception e) {
-            Log.e(TAG, "JSON Error", e);
+    @Override
+    protected void onDestroy() {
+        super.onDestroy();
+        if (exporter != null) {
+            exporter.close();
         }
     }
 }
