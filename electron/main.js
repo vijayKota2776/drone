@@ -156,11 +156,15 @@ ipcMain.handle('mavlink:disconnect', () => {
 });
 
 // DJI IPCs
-ipcMain.handle('dji:connect', (event, config) => {
+ipcMain.handle('dji:connect', async (event, config) => {
   attachTelemetrySource(dji);
   simulator.reset();
-  dji.connect(config);
-  return true;
+  try {
+      await dji.connect(config);
+      return { success: true };
+  } catch (err) {
+      return { success: false, error: err.message };
+  }
 });
 ipcMain.handle('dji:disconnect', () => {
   dji.disconnect();

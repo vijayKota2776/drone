@@ -137,11 +137,18 @@ function App() {
             <ConnectionManager clearTelemetry={() => setTelemetryState(null)} />
             
             <div className="platform-stats">
-              <p>Status: {
-                simStatus === 'RUNNING' ? 'Airborne (Sim)' : 
-                simStatus === 'TELEMETRY_LOST' ? 'Telemetry Lost' :
-                telemetryState ? 'Connected (GPS Lock)' : 
-                (simStatus === 'MAVLINK_ACTIVE' || simStatus === 'MAVLINK_CONNECTED' || simStatus === 'DJI_CONNECTED' || simStatus === 'TELEMETRY_RESTORED') ? 'Connected (Awaiting GPS)' : 'Offline'
+              <p>Listener: {
+                simStatus === 'UDP_LISTENER_ACTIVE' || simStatus === 'TELEMETRY_RECEIVED' || simStatus === 'TELEMETRY_LOST' ? 'ACTIVE' :
+                simStatus === 'DISCONNECTED' || simStatus === 'STOPPED' ? 'INACTIVE' : 
+                simStatus === 'ERROR' ? 'ERROR' : 'UNKNOWN'
+              }</p>
+              <p>Telemetry: {
+                simStatus === 'UDP_LISTENER_ACTIVE' ? 'WAITING FOR TELEMETRY' :
+                simStatus === 'TELEMETRY_RECEIVED' ? 'RECEIVED' :
+                simStatus === 'TELEMETRY_LOST' ? 'LOST' :
+                simStatus === 'RUNNING' ? 'SIMULATOR ACTIVE' :
+                (simStatus === 'MAVLINK_ACTIVE' || simStatus === 'MAVLINK_CONNECTED') ? 'WAITING FOR MAVLINK' : 
+                simStatus === 'ERROR' ? 'ERROR' : 'OFFLINE'
               }</p>
               <p>Lat: {telemetryState ? telemetryState.position.latitude.toFixed(6) : '--'}</p>
               <p>Lon: {telemetryState ? telemetryState.position.longitude.toFixed(6) : '--'}</p>

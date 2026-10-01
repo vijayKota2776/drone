@@ -10,9 +10,14 @@ public class TelemetryManager {
     
     private final TelemetryUdpExporter exporter;
     private int currentBattery = -1;
+    private Float referenceAltitude = null;
     
     public TelemetryManager(TelemetryUdpExporter exporter) {
         this.exporter = exporter;
+    }
+    
+    public void resetReferenceAltitude() {
+        this.referenceAltitude = null;
     }
     
     public void updateBattery(BatteryState state) {
@@ -32,7 +37,20 @@ public class TelemetryManager {
             data.lat = state.getAircraftLocation().getLatitude();
             data.lon = state.getAircraftLocation().getLongitude();
             data.altitude_m = state.getAircraftLocation().getAltitude();
-            data.relative_altitude_m = state.getAircraftLocation().getAltitude();
+            
+            // Fix: Calculate relative altitude properly
+            if (referenceAltitude == null && state.isFlying()) {
+                referenceAltitude = data.altitude_m;
+            } else if (!state.isFlying()) {
+                referenceAltitude = null; // Reset when landed
+                data.relative_altitude_m = 0.0;
+            }
+            
+            if (referenceAltitude != null) {
+                data.relative_altitude_m = data.altitude_m - referenceAltitude;
+            } else {
+                data.relative_altitude_m = 0.0;
+            }
         }
         
         if (state.getAttitude() != null) {

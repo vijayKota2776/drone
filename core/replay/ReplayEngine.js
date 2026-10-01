@@ -96,6 +96,7 @@ class ReplayEngine extends EventEmitter {
                 latitude: raw.latitude,
                 longitude: raw.longitude,
                 altitudeMSL: raw.altitude,
+                relativeAltitude: raw.relativeAltitude !== null ? raw.relativeAltitude : undefined,
                 gridReference: raw.gridReference
             },
             attitude: {
@@ -104,7 +105,16 @@ class ReplayEngine extends EventEmitter {
                 yaw: raw.yaw
             },
             velocity: {
-                groundSpeed: raw.groundSpeed
+                groundSpeed: raw.groundSpeed,
+                velocityX: raw.velocityX !== null ? raw.velocityX : undefined,
+                velocityY: raw.velocityY !== null ? raw.velocityY : undefined,
+                velocityZ: raw.velocityZ !== null ? raw.velocityZ : undefined
+            },
+            status: {
+                satellites: raw.satellites !== null ? raw.satellites : undefined,
+                battery: raw.battery !== null ? raw.battery : undefined,
+                flightMode: raw.flightState !== null ? raw.flightState : undefined,
+                flying: raw.flying !== null ? (raw.flying === 1) : undefined
             },
             sensor: {
                 azimuth: 0,

@@ -31,11 +31,19 @@ db.exec(`
     latitude REAL NOT NULL,
     longitude REAL NOT NULL,
     altitude REAL NOT NULL,
+    relativeAltitude REAL,
     gridReference TEXT,
     yaw REAL,
     pitch REAL,
     roll REAL,
-    groundSpeed REAL
+    groundSpeed REAL,
+    velocityX REAL,
+    velocityY REAL,
+    velocityZ REAL,
+    satellites INTEGER,
+    battery INTEGER,
+    flightState TEXT,
+    flying INTEGER
   );
 
   CREATE TABLE IF NOT EXISTS missions (
@@ -67,6 +75,17 @@ db.exec(`
     notes TEXT
   );
 `);
+
+// Attempt to add columns to existing table if it was created before
+const addCol = (col, type) => { try { db.exec(`ALTER TABLE telemetry ADD COLUMN ${col} ${type};`); } catch(e) {} };
+addCol('relativeAltitude', 'REAL');
+addCol('velocityX', 'REAL');
+addCol('velocityY', 'REAL');
+addCol('velocityZ', 'REAL');
+addCol('satellites', 'INTEGER');
+addCol('battery', 'INTEGER');
+addCol('flightState', 'TEXT');
+addCol('flying', 'INTEGER');
 
 
 module.exports = db;

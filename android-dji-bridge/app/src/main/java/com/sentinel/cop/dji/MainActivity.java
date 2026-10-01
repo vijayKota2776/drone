@@ -35,7 +35,6 @@ public class MainActivity extends Activity {
     
     private TelemetryUdpExporter exporter;
     private TelemetryManager telemetryManager;
-    private boolean isTransmitting = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -108,7 +107,7 @@ public class MainActivity extends Activity {
                 if (djiError == DJISDKError.REGISTRATION_SUCCESS) {
                     Log.i(TAG, "[DJI] SDK registration successful");
                     DJISDKManager.getInstance().startConnectionToProduct();
-                    runOnUiThread(() -> djiStatusText.setText("DJI SDK: CONNECTED"));
+                    runOnUiThread(() -> djiStatusText.setText("DJI SDK: REGISTERED"));
                 } else {
                     Log.e(TAG, "[DJI] SDK registration failed: " + djiError.getDescription());
                     runOnUiThread(() -> djiStatusText.setText("DJI SDK: ERROR - " + djiError.getDescription()));
@@ -131,7 +130,7 @@ public class MainActivity extends Activity {
                     Log.i(TAG, "[DJI] Aircraft connected");
                     runOnUiThread(() -> {
                         aircraftStatusText.setText("Aircraft: CONNECTED");
-                        if (!isTransmitting) {
+                        if (!exporter.isRunning()) {
                             toggleTransmission(); // Auto start transmission
                         }
                     });
@@ -160,9 +159,9 @@ public class MainActivity extends Activity {
         FlightController flightController = aircraft.getFlightController();
         if (flightController != null) {
             flightController.setStateCallback(state -> {
-                if (isTransmitting) {
+                if (exporter.isRunning()) {
                     TelemetryData data = telemetryManager.updateFlightState(state);
-                    if (data != null && exporter.packetsSent % 10 == 0) {
+                    if (data != null && exporter.packetsSent.get() % 10 == 0) {
                         updateUIDebug(data);
                     }
                 }
@@ -175,7 +174,7 @@ public class MainActivity extends Activity {
             telemetryText.setText(
                 String.format("Destination: %s:%s\nPackets Sent: %d\nLast Packet: %d\n\nLAT: %.6f\nLON: %.6f\nALT: %.1f\nHEADING: %.1f\nYAW: %.1f\nPITCH: %.1f\nROLL: %.1f\nSPEED: %.1f\nGPS: %d\nBATTERY: %d",
                     ipInput.getText().toString(), portInput.getText().toString(),
-                    exporter.packetsSent, data.timestamp,
+                    exporter.packetsSent.get(), data.timestamp,
                     data.lat, data.lon, data.altitude_m,
                     data.heading_deg, data.yaw_deg, data.pitch_deg, data.roll_deg,
                     data.speed_mps, data.gps_satellites, data.battery)
@@ -184,15 +183,15 @@ public class MainActivity extends Activity {
     }
 
     private void toggleTransmission() {
-        if (isTransmitting) {
-            isTransmitting = false;
+        if (exporter.isRunning()) {
+            exporter.stop();
             startButton.setText("START UDP");
-            udpStatusText.setText("UDP: NOT CONFIGURED");
+            udpStatusText.setText("UDP: STOPPED");
         } else {
             exporter.setDestination(ipInput.getText().toString(), Integer.parseInt(portInput.getText().toString()));
-            isTransmitting = true;
+            exporter.start();
             startButton.setText("STOP UDP");
-            udpStatusText.setText("UDP: CONNECTED");
+            udpStatusText.setText("UDP: SENDING");
             Log.i(TAG, "[UDP] destination=" + ipInput.getText().toString() + ":" + portInput.getText().toString());
         }
     }

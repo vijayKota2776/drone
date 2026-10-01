@@ -9,11 +9,12 @@ class DJIAdapter extends TelemetrySource {
         this.timeoutMs = 3000;
     }
 
-    connect(config = { port: 8000, host: '0.0.0.0', timeout: 3000 }) {
-        if (this.isConnected) this.disconnect();
-        
-        this.timeoutMs = config.timeout || 3000;
-        this.udpSocket = dgram.createSocket('udp4');
+    connect(config = { port: 14550, host: '0.0.0.0', timeout: 3000 }) {
+        return new Promise((resolve, reject) => {
+            if (this.isConnected) this.disconnect();
+            
+            this.timeoutMs = config.timeout || 3000;
+            this.udpSocket = dgram.createSocket('udp4');
         
         this.udpSocket.on('message', (msg, rinfo) => {
             try {
@@ -92,14 +93,21 @@ class DJIAdapter extends TelemetrySource {
             this.status = 'UDP_LISTENER_ACTIVE';
             this.emitStatus('UDP_LISTENER_ACTIVE');
             this.resetTimeout();
+            resolve(true);
         });
 
         this.udpSocket.on('error', (err) => {
             console.error(`DJI Adapter Socket Error: ${err.message}`);
             this.disconnect();
+            reject(err);
         });
 
-        this.udpSocket.bind(config.port, config.host || '0.0.0.0');
+        try {
+            this.udpSocket.bind(config.port, config.host || '0.0.0.0');
+        } catch(err) {
+            reject(err);
+        }
+        });
     }
 
     resetTimeout() {
