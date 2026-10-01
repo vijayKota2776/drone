@@ -40,24 +40,25 @@ public class TelemetryUdpExporter {
                 }
                 
                 JSONObject json = new JSONObject();
+                json.put("schema_version", 1);
                 json.put("drone_id", data.drone_id);
                 json.put("timestamp", data.timestamp);
                 json.put("latitude", data.lat);
                 json.put("longitude", data.lon);
                 json.put("altitude_m", data.altitude_m);
-                json.put("relativeAltitude", data.relative_altitude_m);
-                json.put("heading", data.heading_deg);
+                json.put("relative_altitude_m", data.relative_altitude_m);
+                json.put("heading_deg", data.heading_deg);
                 json.put("yaw_deg", data.yaw_deg);
                 json.put("pitch_deg", data.pitch_deg);
                 json.put("roll_deg", data.roll_deg);
                 json.put("speed_mps", data.speed_mps);
-                json.put("velocityX", data.velocity_x_mps);
-                json.put("velocityY", data.velocity_y_mps);
-                json.put("velocityZ", data.velocity_z_mps);
-                json.put("gpsSatellites", data.gps_satellites);
+                json.put("velocity_x_mps", data.velocity_x_mps);
+                json.put("velocity_y_mps", data.velocity_y_mps);
+                json.put("velocity_z_mps", data.velocity_z_mps);
+                json.put("gps_satellites", data.gps_satellites);
                 json.put("flying", data.flying);
-                json.put("flightState", data.flight_state);
-                json.put("battery", data.battery);
+                json.put("flight_state", data.flight_state);
+                json.put("battery_percent", data.battery);
 
                 byte[] buf = json.toString().getBytes();
                 InetAddress address = InetAddress.getByName(host);

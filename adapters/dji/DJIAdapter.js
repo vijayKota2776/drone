@@ -37,34 +37,38 @@ class DJIAdapter extends TelemetrySource {
                 
                 // Calculate ground speed from velocityX and velocityY if available
                 let groundSpeed = 0;
-                if (typeof data.velocityX === 'number' && typeof data.velocityY === 'number') {
-                    groundSpeed = Math.sqrt(data.velocityX**2 + data.velocityY**2);
+                let velX = data.velocity_x_mps !== undefined ? data.velocity_x_mps : (data.velocityX || 0);
+                let velY = data.velocity_y_mps !== undefined ? data.velocity_y_mps : (data.velocityY || 0);
+                let velZ = data.velocity_z_mps !== undefined ? data.velocity_z_mps : (data.velocityZ || 0);
+                
+                if (velX !== 0 || velY !== 0) {
+                    groundSpeed = Math.sqrt(velX**2 + velY**2);
                 }
 
                 this.emitTelemetry({
                     position: {
                         latitude: data.latitude,
                         longitude: data.longitude,
-                        altitudeMSL: data.altitude || 0,
-                        relativeAltitude: data.relativeAltitude || 0
+                        altitudeMSL: data.altitude_m !== undefined ? data.altitude_m : (data.altitude || 0),
+                        relativeAltitude: data.relative_altitude_m !== undefined ? data.relative_altitude_m : (data.relativeAltitude || 0)
                     },
                     attitude: {
-                        yaw: data.heading || 0,
-                        pitch: 0,
-                        roll: 0
+                        yaw: data.yaw_deg !== undefined ? data.yaw_deg : (data.heading_deg || data.heading || 0),
+                        pitch: data.pitch_deg || 0,
+                        roll: data.roll_deg || 0
                     },
                     velocity: {
-                        groundSpeed: groundSpeed,
-                        velocityX: data.velocityX || 0,
-                        velocityY: data.velocityY || 0,
-                        velocityZ: data.velocityZ || 0
+                        groundSpeed: data.speed_mps !== undefined ? data.speed_mps : groundSpeed,
+                        velocityX: velX,
+                        velocityY: velY,
+                        velocityZ: velZ
                     },
                     status: {
-                        battery: data.battery || 100,
-                        flightMode: data.flightState || 'UNKNOWN',
-                        satellites: data.gpsSatellites || 0
+                        battery: data.battery_percent !== undefined ? data.battery_percent : (data.battery || 100),
+                        flightMode: data.flight_state || data.flightState || 'UNKNOWN',
+                        satellites: data.gps_satellites !== undefined ? data.gps_satellites : (data.gpsSatellites || 0)
                     },
-                    platformId: this.platformId,
+                    platformId: data.drone_id || this.platformId,
                     timestamp: data.timestamp || Date.now()
                 });
 

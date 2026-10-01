@@ -86,7 +86,12 @@ public class MainActivity extends Activity {
                 Log.i(TAG, "[DJI] Product connected");
                 if (baseProduct instanceof Aircraft) {
                     Log.i(TAG, "[DJI] Aircraft connected");
-                    runOnUiThread(() -> aircraftStatusText.setText("Aircraft: CONNECTED"));
+                    runOnUiThread(() -> {
+                        aircraftStatusText.setText("Aircraft: CONNECTED");
+                        if (!isTransmitting) {
+                            toggleTransmission(); // Auto start transmission
+                        }
+                    });
                     setupTelemetryListeners((Aircraft) baseProduct);
                 }
             }
