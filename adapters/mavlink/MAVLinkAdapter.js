@@ -54,43 +54,66 @@ class MAVLinkAdapter extends TelemetrySource {
     }
 
     connect(config = {}) {
-        if (this.isConnected) this.disconnect();
-        
-        this.connectionType = config.type || 'UDP'; // 'UDP' or 'SERIAL'
+        return new Promise((resolve, reject) => {
+            if (this.isConnected) this.disconnect();
+            
+            this.connectionType = config.type || 'UDP'; // 'UDP' or 'SERIAL'
 
-        if (this.connectionType === 'UDP') {
-            this._connectUDP(config.port || 14550, config.host || '0.0.0.0');
-        } else if (this.connectionType === 'SERIAL') {
-            this._connectSerial(config.path || '/dev/ttyUSB0', config.baudRate || 57600);
-        }
-
-        this.isConnected = true;
-        this.emitStatus('MAVLINK_CONNECTED');
-        console.log(`MAVLink Adapter: Connecting via ${this.connectionType}...`);
+            if (this.connectionType === 'MAVLINK_UDP' || this.connectionType === 'UDP') {
+                this._connectUDP(config.port || 14550, config.host || '0.0.0.0', resolve, reject);
+            } else if (this.connectionType === 'SERIAL') {
+                this._connectSerial(config.path || '/dev/ttyUSB0', config.baudRate || 57600, resolve, reject);
+            } else {
+                reject(new Error('Unknown connection type'));
+            }
+        });
     }
 
-    _connectUDP(port, host) {
+    _connectUDP(port, host, resolve, reject) {
         this.udpSocket = dgram.createSocket('udp4');
         
         this.udpSocket.on('message', (msg, rinfo) => {
             this.splitter.write(msg);
         });
 
+        this.udpSocket.on('error', (err) => {
+            console.error('MAVLink UDP Socket Error:', err);
+            this.disconnect();
+            reject(err);
+        });
+
         this.udpSocket.on('listening', () => {
             const address = this.udpSocket.address();
             console.log(`MAVLink UDP listening on ${address.address}:${address.port}`);
+            this.isConnected = true;
+            this.emitStatus('MAVLINK_CONNECTED');
+            resolve(true);
         });
 
-        this.udpSocket.bind(port, host);
+        try {
+            this.udpSocket.bind(port, host);
+        } catch(err) {
+            reject(err);
+        }
     }
 
-    _connectSerial(path, baudRate) {
+    _connectSerial(path, baudRate, resolve, reject) {
         this.serialPort = new SerialPort({ path, baudRate }, (err) => {
             if (err) {
                 console.error('Error opening serial port: ', err.message);
+                this.disconnect();
+                reject(err);
                 return;
             }
             console.log(`MAVLink Serial listening on ${path} at ${baudRate} baud`);
+            this.isConnected = true;
+            this.emitStatus('MAVLINK_CONNECTED');
+            resolve(true);
+        });
+
+        this.serialPort.on('error', (err) => {
+            console.error('MAVLink Serial Error:', err.message);
+            this.disconnect();
         });
 
         this.serialPort.on('data', (data) => {

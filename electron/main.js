@@ -143,11 +143,15 @@ ipcMain.handle('simulator:loadMission', async (event, missionId) => {
 });
 
 // MAVLink IPCs
-ipcMain.handle('mavlink:connect', (event, config) => {
+ipcMain.handle('mavlink:connect', async (event, config) => {
   attachTelemetrySource(mavlink);
   simulator.reset();
-  mavlink.connect(config);
-  return true;
+  try {
+      await mavlink.connect(config);
+      return { success: true };
+  } catch (err) {
+      return { success: false, error: err.message };
+  }
 });
 ipcMain.handle('mavlink:disconnect', () => {
   mavlink.disconnect();

@@ -78,54 +78,44 @@ const SimulatorControls = ({ onTelemetryUpdate, onStatusUpdate, setWaypoints }) 
     return (
         <div className="simulator-controls">
             <div className="controls-header">
-                <h3>{source === 'SIMULATOR' ? 'Simulator Controls' : 'MAVLink Telemetry'}</h3>
+                <h3>Simulator Controls</h3>
                 <span className={`status-badge ${status.toLowerCase()}`}>{status}</span>
             </div>
             
-            {source === 'SIMULATOR' ? (
-                <>
-                    <div className="button-group">
-                        <button onClick={handleStart} disabled={status === 'RUNNING'} className="btn-start">Start</button>
-                        <button onClick={handlePause} disabled={status !== 'RUNNING'} className="btn-pause">Pause</button>
-                        <button onClick={handleReset} className="btn-reset">Reset</button>
-                    </div>
+            <div className="button-group">
+                <button onClick={handleStart} disabled={status === 'RUNNING'} className="btn-start">Start</button>
+                <button onClick={handlePause} disabled={status !== 'RUNNING'} className="btn-pause">Pause</button>
+                <button onClick={handleReset} className="btn-reset">Reset</button>
+            </div>
 
-                    <div className="execution-mode" style={{marginTop: '10px', display: 'flex', gap: '8px'}}>
-                        <select 
-                            style={{flex: 1, padding: '4px', background: '#0d0f14', color: '#fff', border: '1px solid #4a5568'}}
-                            value={selectedMission} 
-                            onChange={(e) => setSelectedMission(e.target.value)}
-                        >
-                            <option value="">-- Select Mission to Execute --</option>
-                            {missions.map(m => (
-                                <option key={m.id} value={m.id}>{m.name}</option>
-                            ))}
-                        </select>
-                        <button 
-                            style={{padding: '4px 12px', background: 'rgba(99, 179, 237, 0.2)', border: '1px solid #63b3ed', color: '#63b3ed'}}
-                            disabled={!selectedMission || status === 'RUNNING'}
-                            onClick={handleLoadMission}
-                        >
-                            Load
-                        </button>
-                    </div>
+            <div className="execution-mode" style={{marginTop: '10px', display: 'flex', gap: '8px'}}>
+                <select 
+                    style={{flex: 1, padding: '4px', background: '#0d0f14', color: '#fff', border: '1px solid #4a5568'}}
+                    value={selectedMission} 
+                    onChange={(e) => setSelectedMission(e.target.value)}
+                >
+                    <option value="">-- Select Mission to Execute --</option>
+                    {missions.map(m => (
+                        <option key={m.id} value={m.id}>{m.name}</option>
+                    ))}
+                </select>
+                <button 
+                    style={{padding: '4px 12px', background: 'rgba(99, 179, 237, 0.2)', border: '1px solid #63b3ed', color: '#63b3ed'}}
+                    disabled={!selectedMission || status === 'RUNNING'}
+                    onClick={handleLoadMission}
+                >
+                    Load
+                </button>
+            </div>
 
-                    <div className="speed-control">
-                        <label>Playback Speed: {speed.toFixed(1)}x</label>
-                        <input 
-                            type="range" min="0.1" max="5.0" step="0.1" 
-                            value={speed} onChange={handleSpeedChange} 
-                            onMouseUp={handleSpeedCommit} onTouchEnd={handleSpeedCommit}
-                        />
-                    </div>
-                    <button style={{marginTop: '10px', width: '100%', padding: '6px', backgroundColor: 'rgba(72, 187, 120, 0.2)', border: '1px solid #48bb78', color: '#48bb78'}} onClick={handleConnectMavlink}>Connect Hardware (MAVLink)</button>
-                </>
-            ) : (
-                <div style={{display: 'flex', flexDirection: 'column', gap: '10px'}}>
-                    <p style={{color: '#a0aec0', fontSize: '12px', textAlign: 'center'}}>Listening for MAVLink heartbeat...</p>
-                    <button style={{width: '100%', padding: '6px', backgroundColor: 'rgba(245, 101, 101, 0.2)', border: '1px solid #fc8181', color: '#fc8181'}} onClick={handleDisconnectMavlink}>Disconnect & Return to Simulator</button>
-                </div>
-            )}
+            <div className="speed-control">
+                <label>Playback Speed: {speed.toFixed(1)}x</label>
+                <input 
+                    type="range" min="0.1" max="5.0" step="0.1" 
+                    value={speed} onChange={handleSpeedChange} 
+                    onMouseUp={handleSpeedCommit} onTouchEnd={handleSpeedCommit}
+                />
+            </div>
         </div>
     );
 };

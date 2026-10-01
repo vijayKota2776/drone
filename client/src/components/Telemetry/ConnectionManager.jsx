@@ -26,19 +26,37 @@ const ConnectionManager = ({ clearTelemetry }) => {
             const config = { type: connectionType };
             let success = false;
             
-            if (connectionType === 'MAVLINK_UDP' || connectionType === 'UDP') {
-                config.host = udpHost;
-                config.port = udpPort;
-                success = await window.electronAPI.connectMavlink(config);
-            } else if (connectionType === 'DJI_JSON') {
-                config.host = udpHost;
-                config.port = udpPort;
-                config.timeout = timeoutMs;
-                success = await window.electronAPI.connectDJI(config);
-            } else {
-                config.path = serialPort;
-                config.baudRate = baudRate;
-                success = await window.electronAPI.connectMavlink(config);
+            try {
+                if (connectionType === 'MAVLINK_UDP' || connectionType === 'UDP') {
+                    config.host = udpHost;
+                    config.port = udpPort;
+                    const res = await window.electronAPI.connectMavlink(config);
+                    success = res && res.success;
+                    if (!success && res && res.error) {
+                        alert("MAVLink Connection Error: " + res.error);
+                    }
+                } else if (connectionType === 'DJI_JSON') {
+                    config.host = udpHost;
+                    config.port = udpPort;
+                    config.timeout = timeoutMs;
+                    const res = await window.electronAPI.connectDJI(config);
+                    success = res && res.success;
+                    if (!success && res && res.error) {
+                        alert("DJI Connection Error: " + res.error);
+                    }
+                } else {
+                    config.path = serialPort;
+                    config.baudRate = baudRate;
+                    const res = await window.electronAPI.connectMavlink(config);
+                    success = res && res.success;
+                    if (!success && res && res.error) {
+                        alert("Serial Connection Error: " + res.error);
+                    }
+                }
+            } catch (err) {
+                console.error("Connection failed:", err);
+                alert("Connection failed: " + err.message);
+                success = false;
             }
             
             if (success) {
