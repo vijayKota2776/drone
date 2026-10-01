@@ -25,24 +25,24 @@ db.exec(`
 
   CREATE TABLE IF NOT EXISTS telemetry (
     id INTEGER PRIMARY KEY AUTOINCREMENT,
-    flightId TEXT,
+    flight_id TEXT,
     timestamp INTEGER NOT NULL,
-    platformId TEXT NOT NULL,
+    platform_id TEXT NOT NULL,
     latitude REAL NOT NULL,
     longitude REAL NOT NULL,
-    altitude REAL NOT NULL,
-    relativeAltitude REAL,
-    gridReference TEXT,
-    yaw REAL,
-    pitch REAL,
-    roll REAL,
-    groundSpeed REAL,
-    velocityX REAL,
-    velocityY REAL,
-    velocityZ REAL,
-    satellites INTEGER,
-    battery INTEGER,
-    flightState TEXT,
+    altitude_m REAL NOT NULL,
+    relative_altitude_m REAL,
+    heading_deg REAL,
+    yaw_deg REAL,
+    pitch_deg REAL,
+    roll_deg REAL,
+    speed_mps REAL,
+    velocity_x_mps REAL,
+    velocity_y_mps REAL,
+    velocity_z_mps REAL,
+    gps_satellites INTEGER,
+    battery_percent INTEGER,
+    flight_state TEXT,
     flying INTEGER
   );
 
@@ -78,14 +78,21 @@ db.exec(`
 
 // Attempt to add columns to existing table if it was created before
 const addCol = (col, type) => { try { db.exec(`ALTER TABLE telemetry ADD COLUMN ${col} ${type};`); } catch(e) {} };
-addCol('relativeAltitude', 'REAL');
-addCol('velocityX', 'REAL');
-addCol('velocityY', 'REAL');
-addCol('velocityZ', 'REAL');
-addCol('satellites', 'INTEGER');
-addCol('battery', 'INTEGER');
-addCol('flightState', 'TEXT');
+addCol('flight_id', 'TEXT');
+addCol('platform_id', 'TEXT');
+addCol('altitude_m', 'REAL');
+addCol('relative_altitude_m', 'REAL');
+addCol('heading_deg', 'REAL');
+addCol('yaw_deg', 'REAL');
+addCol('pitch_deg', 'REAL');
+addCol('roll_deg', 'REAL');
+addCol('speed_mps', 'REAL');
+addCol('velocity_x_mps', 'REAL');
+addCol('velocity_y_mps', 'REAL');
+addCol('velocity_z_mps', 'REAL');
+addCol('gps_satellites', 'INTEGER');
+addCol('battery_percent', 'INTEGER');
+addCol('flight_state', 'TEXT');
 addCol('flying', 'INTEGER');
-
 
 module.exports = db;

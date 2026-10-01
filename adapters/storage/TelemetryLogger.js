@@ -17,11 +17,11 @@ class TelemetryLogger {
         // Pre-compile the insert statement for max performance
         this.insertStmt = db.prepare(`
             INSERT INTO telemetry (
-                flightId, timestamp, platformId, latitude, longitude, altitude, relativeAltitude, gridReference, yaw, pitch, roll, groundSpeed,
-                velocityX, velocityY, velocityZ, satellites, battery, flightState, flying
+                flight_id, timestamp, platform_id, latitude, longitude, altitude_m, relative_altitude_m, heading_deg, yaw_deg, pitch_deg, roll_deg, speed_mps,
+                velocity_x_mps, velocity_y_mps, velocity_z_mps, gps_satellites, battery_percent, flight_state, flying
             ) VALUES (
-                @flightId, @timestamp, @platformId, @latitude, @longitude, @altitude, @relativeAltitude, @gridReference, @yaw, @pitch, @roll, @groundSpeed,
-                @velocityX, @velocityY, @velocityZ, @satellites, @battery, @flightState, @flying
+                @flight_id, @timestamp, @platform_id, @latitude, @longitude, @altitude_m, @relative_altitude_m, @heading_deg, @yaw_deg, @pitch_deg, @roll_deg, @speed_mps,
+                @velocity_x_mps, @velocity_y_mps, @velocity_z_mps, @gps_satellites, @battery_percent, @flight_state, @flying
             )
         `);
     }
@@ -63,24 +63,24 @@ class TelemetryLogger {
 
         try {
             this.insertStmt.run({
-                flightId: this.currentFlightId,
+                flight_id: this.currentFlightId,
                 timestamp: data.timestamp,
-                platformId: data.platformId,
+                platform_id: data.platformId,
                 latitude: data.position.latitude,
                 longitude: data.position.longitude,
-                altitude: data.position.altitudeMSL,
-                relativeAltitude: data.position.relativeAltitude !== undefined ? data.position.relativeAltitude : null,
-                gridReference: data.position.gridReference || null,
-                yaw: data.attitude.yaw,
-                pitch: data.attitude.pitch,
-                roll: data.attitude.roll,
-                groundSpeed: data.velocity.groundSpeed,
-                velocityX: data.velocity.velocityX !== undefined ? data.velocity.velocityX : null,
-                velocityY: data.velocity.velocityY !== undefined ? data.velocity.velocityY : null,
-                velocityZ: data.velocity.velocityZ !== undefined ? data.velocity.velocityZ : null,
-                satellites: data.status.satellites !== undefined ? data.status.satellites : null,
-                battery: data.status.battery !== undefined ? data.status.battery : null,
-                flightState: data.status.flightMode !== undefined ? data.status.flightMode : null,
+                altitude_m: data.position.altitudeMSL,
+                relative_altitude_m: data.position.relativeAltitude !== undefined ? data.position.relativeAltitude : null,
+                heading_deg: data.attitude.yaw,
+                yaw_deg: data.attitude.yaw,
+                pitch_deg: data.attitude.pitch,
+                roll_deg: data.attitude.roll,
+                speed_mps: data.velocity.groundSpeed,
+                velocity_x_mps: data.velocity.velocityX !== undefined ? data.velocity.velocityX : null,
+                velocity_y_mps: data.velocity.velocityY !== undefined ? data.velocity.velocityY : null,
+                velocity_z_mps: data.velocity.velocityZ !== undefined ? data.velocity.velocityZ : null,
+                gps_satellites: data.status.satellites !== undefined ? data.status.satellites : null,
+                battery_percent: data.status.battery !== undefined ? data.status.battery : null,
+                flight_state: data.status.flightMode !== undefined ? data.status.flightMode : null,
                 flying: data.status.flying !== undefined ? (data.status.flying ? 1 : 0) : null
             });
         } catch (err) {

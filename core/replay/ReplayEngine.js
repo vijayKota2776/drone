@@ -91,29 +91,29 @@ class ReplayEngine extends EventEmitter {
         // Re-construct the normalized telemetry object
         const telemetry = {
             timestamp: raw.timestamp,
-            platformId: raw.platformId,
+            platformId: raw.platform_id,
             position: {
                 latitude: raw.latitude,
                 longitude: raw.longitude,
-                altitudeMSL: raw.altitude,
-                relativeAltitude: raw.relativeAltitude !== null ? raw.relativeAltitude : undefined,
-                gridReference: raw.gridReference
+                altitudeMSL: raw.altitude_m,
+                relativeAltitude: raw.relative_altitude_m !== null ? raw.relative_altitude_m : undefined,
+                gridReference: raw.gridReference || null
             },
             attitude: {
-                roll: raw.roll,
-                pitch: raw.pitch,
-                yaw: raw.yaw
+                roll: raw.roll_deg !== null ? raw.roll_deg : undefined,
+                pitch: raw.pitch_deg !== null ? raw.pitch_deg : undefined,
+                yaw: raw.yaw_deg !== null ? raw.yaw_deg : (raw.heading_deg !== null ? raw.heading_deg : undefined)
             },
             velocity: {
-                groundSpeed: raw.groundSpeed,
-                velocityX: raw.velocityX !== null ? raw.velocityX : undefined,
-                velocityY: raw.velocityY !== null ? raw.velocityY : undefined,
-                velocityZ: raw.velocityZ !== null ? raw.velocityZ : undefined
+                groundSpeed: raw.speed_mps !== null ? raw.speed_mps : undefined,
+                velocityX: raw.velocity_x_mps !== null ? raw.velocity_x_mps : undefined,
+                velocityY: raw.velocity_y_mps !== null ? raw.velocity_y_mps : undefined,
+                velocityZ: raw.velocity_z_mps !== null ? raw.velocity_z_mps : undefined
             },
             status: {
-                satellites: raw.satellites !== null ? raw.satellites : undefined,
-                battery: raw.battery !== null ? raw.battery : undefined,
-                flightMode: raw.flightState !== null ? raw.flightState : undefined,
+                satellites: raw.gps_satellites !== null ? raw.gps_satellites : undefined,
+                battery: raw.battery_percent !== null ? raw.battery_percent : undefined,
+                flightMode: raw.flight_state !== null ? raw.flight_state : undefined,
                 flying: raw.flying !== null ? (raw.flying === 1) : undefined
             },
             sensor: {

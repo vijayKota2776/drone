@@ -10,7 +10,7 @@ class ReplayRepository {
     }
 
     getTelemetry(flightId) {
-        return db.prepare('SELECT * FROM telemetry WHERE flightId = ? ORDER BY timestamp ASC').all();
+        return db.prepare('SELECT * FROM telemetry WHERE flight_id = ? ORDER BY timestamp ASC').all(flightId);
     }
 }
 
