@@ -82,6 +82,8 @@ const columns = tableInfo.map(c => c.name);
 
 if (columns.includes('flightId') && !columns.includes('flight_id')) {
     console.log("Migrating telemetry table to canonical snake_case schema...");
+    const oldHeading = columns.includes('heading') ? 'heading' : 'NULL';
+    
     db.exec(`
         BEGIN TRANSACTION;
         
@@ -110,12 +112,12 @@ if (columns.includes('flightId') && !columns.includes('flight_id')) {
         
         INSERT INTO telemetry_new (
             id, flight_id, timestamp, platform_id, latitude, longitude, altitude_m, relative_altitude_m,
-            yaw_deg, pitch_deg, roll_deg, speed_mps, velocity_x_mps, velocity_y_mps, velocity_z_mps,
+            heading_deg, yaw_deg, pitch_deg, roll_deg, speed_mps, velocity_x_mps, velocity_y_mps, velocity_z_mps,
             gps_satellites, battery_percent, flight_state, flying
         )
         SELECT 
             id, flightId, timestamp, platformId, latitude, longitude, altitude, relativeAltitude,
-            yaw, pitch, roll, groundSpeed, velocityX, velocityY, velocityZ,
+            ${oldHeading}, yaw, pitch, roll, groundSpeed, velocityX, velocityY, velocityZ,
             satellites, battery, flightState, flying
         FROM telemetry;
         

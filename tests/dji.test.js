@@ -207,6 +207,7 @@ async function runTests() {
                 longitude REAL NOT NULL,
                 altitude REAL NOT NULL,
                 relativeAltitude REAL,
+                heading REAL,
                 yaw REAL,
                 pitch REAL,
                 roll REAL,
@@ -222,18 +223,16 @@ async function runTests() {
         `);
         // Insert OLD record
         migDb.prepare(`
-            INSERT INTO telemetry (flightId, timestamp, platformId, latitude, longitude, altitude, yaw, pitch, roll, groundSpeed) 
-            VALUES ('OLD_FLIGHT', 999, 'OLD_PLATFORM', 1.0, 2.0, 3.0, 4.0, 5.0, 6.0, 7.0)
+            INSERT INTO telemetry (flightId, timestamp, platformId, latitude, longitude, altitude, heading, yaw, pitch, roll, groundSpeed) 
+            VALUES ('OLD_FLIGHT', 999, 'OLD_PLATFORM', 1.0, 2.0, 3.0, 123.4, 87.6, 5.0, 6.0, 7.0)
         `).run();
         
-        // Override the dbPath in database/index.js temporarily
-        process.env.DB_PATH = migDbPath;
-        const dbIndex = require('../database/index'); // This will execute the migration because DB_PATH is not natively supported in index.js unless we change it... Wait, index.js doesn't use process.env.DB_PATH.
         // Let's just run the exact migration script on migDb to simulate it.
         const tableInfo = migDb.pragma('table_info(telemetry)');
         const columns = tableInfo.map(c => c.name);
 
         if (columns.includes('flightId') && !columns.includes('flight_id')) {
+            const oldHeading = columns.includes('heading') ? 'heading' : 'NULL';
             migDb.exec(`
                 BEGIN TRANSACTION;
                 
@@ -262,12 +261,12 @@ async function runTests() {
                 
                 INSERT INTO telemetry_new (
                     id, flight_id, timestamp, platform_id, latitude, longitude, altitude_m, relative_altitude_m,
-                    yaw_deg, pitch_deg, roll_deg, speed_mps, velocity_x_mps, velocity_y_mps, velocity_z_mps,
+                    heading_deg, yaw_deg, pitch_deg, roll_deg, speed_mps, velocity_x_mps, velocity_y_mps, velocity_z_mps,
                     gps_satellites, battery_percent, flight_state, flying
                 )
                 SELECT 
                     id, flightId, timestamp, platformId, latitude, longitude, altitude, relativeAltitude,
-                    yaw, pitch, roll, groundSpeed, velocityX, velocityY, velocityZ,
+                    ${oldHeading}, yaw, pitch, roll, groundSpeed, velocityX, velocityY, velocityZ,
                     satellites, battery, flightState, flying
                 FROM telemetry;
                 
@@ -282,7 +281,8 @@ async function runTests() {
         assert.strictEqual(migRecord.flight_id, 'OLD_FLIGHT');
         assert.strictEqual(migRecord.platform_id, 'OLD_PLATFORM');
         assert.strictEqual(migRecord.altitude_m, 3.0);
-        assert.strictEqual(migRecord.yaw_deg, 4.0);
+        assert.strictEqual(migRecord.heading_deg, 123.4);
+        assert.strictEqual(migRecord.yaw_deg, 87.6);
         assert.strictEqual(migRecord.pitch_deg, 5.0);
         assert.strictEqual(migRecord.roll_deg, 6.0);
         assert.strictEqual(migRecord.speed_mps, 7.0);
