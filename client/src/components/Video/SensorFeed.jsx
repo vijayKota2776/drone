@@ -4,6 +4,13 @@ import { formatNumber, altitudeLabel } from '../../telemetryDisplay';
 
 const SensorFeed = ({ telemetry }) => {
     const canvasRef = useRef(null);
+    const videoRef = useRef(null);
+
+    useEffect(() => {
+        if (videoRef.current) {
+            videoRef.current.play().catch(() => {});
+        }
+    }, []);
 
     useEffect(() => {
         const canvas = canvasRef.current;
@@ -80,6 +87,7 @@ const SensorFeed = ({ telemetry }) => {
     return (
         <div className="sensor-feed-container" style={{position: 'relative'}}>
             <video 
+                ref={videoRef}
                 src="./test-video.mp4"
                 autoPlay 
                 loop 
