@@ -31,7 +31,8 @@
     "build": "cd client && npm run build && cd .. && electron-builder",
     "test": "node tests/dji.test.js && node tests/coordinates/engine.test.js && node --test tests/bridge/*.test.cjs",
     "test:desktop": "node scripts/electron-smoke.cjs",
-    "simulate:dji": "node scripts/simulate_dji_stream.js"
+    "simulate:dji": "node scripts/simulate_dji_stream.js",
+    "map:download": "node scripts/download_map.js"
   },
   "keywords": [],
   "author": "",
