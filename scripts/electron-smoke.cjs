@@ -53,7 +53,7 @@ const fixture = require('../tests/fixtures/dji-v2.json');
   console.log('PASS: real Electron app → IPC listener → UDP → GPS/no-fix/test/stale UI → SQLite recording → replay. No renderer exceptions.');
  } finally {
   transmitter.close(); await app.close();
-  assert.ok(fs.realpathSync(temporary).startsWith(path.resolve(os.tmpdir()) + path.sep + 'sentinel-ui-'));
+  assert.ok(fs.realpathSync(temporary).startsWith(fs.realpathSync(os.tmpdir()) + path.sep + 'sentinel-ui-'));
   fs.rmSync(temporary,{recursive:true,force:true});
  }
 })().catch(error=>{console.error(error);process.exitCode=1;});

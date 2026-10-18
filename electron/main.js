@@ -1,4 +1,4 @@
-const { app, BrowserWindow, ipcMain, protocol, net } = require('electron');
+const { app, BrowserWindow, ipcMain, protocol } = require('electron');
 const path = require('path');
 if (process.env.SENTINEL_USER_DATA_DIR) app.setPath('userData', process.env.SENTINEL_USER_DATA_DIR);
 // Installed applications cannot write their SQLite database inside app.asar.
