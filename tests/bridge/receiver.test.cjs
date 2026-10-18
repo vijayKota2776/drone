@@ -86,7 +86,8 @@ test('simulator script output is accepted as aircraft telemetry (no fix, then fi
 test('malformed packets never emit telemetry or promote receiver state', async t => {
     const {adapter,send} = await receiver(t);
     let count=0; adapter.on('telemetry',()=>count++);
-    for (const data of ['{bad', {...fixture,latitude:null},{...fixture,latitude:'28.6'},'x'.repeat(16385)]) await send(data);
+    for (const data of ['{bad', {...fixture,latitude:null},{...fixture,latitude:'28.6'}]) await send(data);
+    adapter.udpSocket.emit('message', Buffer.alloc(16385));
     await delay(60);
     assert.equal(count,0);
     assert.equal(adapter.status,'UDP_LISTENER_ACTIVE');

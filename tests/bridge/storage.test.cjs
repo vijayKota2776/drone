@@ -37,7 +37,7 @@ test('SQLite nullable migration preserves legacy rows and V2 no-fix / takeoff sa
  try{
   const result=spawnSync(process.execPath,['-e',script],{cwd:path.join(__dirname,'../..'),env:{...process.env,SENTINEL_DATA_DIR:dir},encoding:'utf8'});
   assert.equal(result.status,0,result.stdout+'\n'+result.stderr);
- } finally{assert.ok(fs.realpathSync(dir).startsWith(path.resolve(os.tmpdir())+path.sep+'sentinel-storage-'));fs.rmSync(dir,{recursive:true,force:true});}
+ } finally{assert.ok(fs.realpathSync(dir).startsWith(fs.realpathSync(os.tmpdir())+path.sep+'sentinel-storage-'));fs.rmSync(dir,{recursive:true,force:true});}
 });
 
 test('source data relocation preserves flights/WAL/maps and never overwrites user data',()=>{
@@ -51,5 +51,5 @@ test('source data relocation preserves flights/WAL/maps and never overwrites use
   fs.writeFileSync(path.join(next,'map.mbtiles'),'new-map'); migrate(old,next);
   assert.equal(fs.readFileSync(path.join(next,'map.mbtiles'),'utf8'),'new-map');
   assert.ok(fs.existsSync(path.join(old,'cop_database.sqlite')));
- } finally { assert.ok(fs.realpathSync(root).startsWith(path.resolve(os.tmpdir())+path.sep+'sentinel-migration-')); fs.rmSync(root,{recursive:true,force:true}); }
+ } finally { assert.ok(fs.realpathSync(root).startsWith(fs.realpathSync(os.tmpdir())+path.sep+'sentinel-migration-')); fs.rmSync(root,{recursive:true,force:true}); }
 });
