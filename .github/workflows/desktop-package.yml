@@ -2,7 +2,7 @@ name: Windows desktop package
 on:
   workflow_dispatch:
   push:
-    branches: ['codex/**']
+    branches: [main, 'codex/**']
 permissions:
   contents: read
 jobs:
