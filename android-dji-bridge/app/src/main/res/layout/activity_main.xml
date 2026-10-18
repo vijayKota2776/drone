@@ -1,9 +1,24 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+<LinearLayout
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:padding="16dp">
+
+    <!-- Height set to 16:9 of the width in MainActivity. -->
+    <TextureView
+        android:id="@+id/video_view"
+        android:layout_width="match_parent"
+        android:layout_height="200dp" />
+
+    <TextView
+        android:id="@+id/video_status"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginBottom="8dp"
+        android:text="Camera: connect the aircraft to see live video" />
 
     <TextView
         android:id="@+id/dji_status"
@@ -43,16 +58,28 @@
             android:layout_weight="1"
             android:layout_height="wrap_content"
             android:hint="Windows IP"
-            android:text="10.56.164.60" />
+            android:inputType="phone" />
             
         <EditText
             android:id="@+id/port_input"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:hint="Port"
-            android:text="14550" />
+            android:text="14550"
+            android:inputType="number" />
     </LinearLayout>
 
+    <Button
+        android:id="@+id/register_button"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="RETRY DJI REGISTRATION / PERMISSIONS" />
+    <Button
+        android:id="@+id/export_button"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="SAVE DIAGNOSTIC REPORT" />
+    <TextView
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:text="Telemetry only. Stop UDP before editing destination. Test packets are synthetic. Reports remain local until you share them." />
     <Button
         android:id="@+id/start_button"
         android:layout_width="match_parent"
@@ -77,3 +104,4 @@
         android:fontFamily="monospace" />
 
 </LinearLayout>
+</ScrollView>

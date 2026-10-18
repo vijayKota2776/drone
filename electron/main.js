@@ -1,5 +1,9 @@
 const { app, BrowserWindow, ipcMain, protocol, net } = require('electron');
 const path = require('path');
+if (process.env.SENTINEL_USER_DATA_DIR) app.setPath('userData', process.env.SENTINEL_USER_DATA_DIR);
+// Installed applications cannot write their SQLite database inside app.asar.
+process.env.SENTINEL_DATA_DIR = path.join(app.getPath('userData'), 'data');
+if (!app.isPackaged) require('../core/storage/migrateLegacyData')(path.join(__dirname, '../data'), process.env.SENTINEL_DATA_DIR);
 const mbtilesServer = require('../core/map/MbtilesServer');
 
 // Register custom protocol for maps
@@ -175,6 +179,12 @@ ipcMain.handle('dji:disconnect', () => {
   attachTelemetrySource(simulator);
   return true;
 });
+ipcMain.handle('dji:diagnostics', () => dji.getDiagnostics());
+// The phone needs the laptop's LAN address; listing it avoids gateway/VPN/loopback mistakes during setup.
+ipcMain.handle('network:addresses', () => Object.entries(require('os').networkInterfaces())
+  .flatMap(([name, entries]) => (entries || [])
+    .filter(entry => entry.family === 'IPv4' && !entry.internal && !entry.address.startsWith('169.254.'))
+    .map(entry => ({ name, address: entry.address }))));
 
 // Recording IPCs
 ipcMain.handle('record:start', () => {
