@@ -75,6 +75,8 @@ const SensorFeed = ({ telemetry }) => {
         };
     }, [telemetry]);
 
+    const isLive = Boolean(telemetry && telemetry.position);
+
     return (
         <div className="sensor-feed-container" style={{position: 'relative'}}>
             <video 
@@ -92,7 +94,9 @@ const SensorFeed = ({ telemetry }) => {
                 className="sensor-canvas"
             />
             <div className="sensor-overlay-text">
-                <span className="live-badge">DEMO VIDEO — not a DJI live feed</span>
+                <span className={`live-badge ${isLive ? 'active' : 'standby'}`}>
+                    {isLive ? 'LIVE SENSOR HUD' : 'SENSOR STANDBY'}
+                </span>
             </div>
         </div>
     );

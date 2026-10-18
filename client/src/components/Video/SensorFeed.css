@@ -40,17 +40,26 @@
 }
 
 .live-badge {
-    background-color: rgba(245, 101, 101, 0.9);
     color: white;
     font-size: 10px;
     font-weight: bold;
     padding: 3px 6px;
     border-radius: 4px;
+    letter-spacing: 0.5px;
+}
+
+.live-badge.active {
+    background-color: rgba(56, 161, 105, 0.95);
+    box-shadow: 0 0 8px rgba(72, 187, 120, 0.5);
     animation: pulse 2s infinite;
+}
+
+.live-badge.standby {
+    background-color: rgba(113, 128, 150, 0.7);
 }
 
 @keyframes pulse {
     0% { opacity: 1; }
-    50% { opacity: 0.5; }
+    50% { opacity: 0.6; }
     100% { opacity: 1; }
 }
