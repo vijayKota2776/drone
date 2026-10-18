@@ -16,10 +16,13 @@ const isDev = process.env.NODE_ENV === 'development';
 
 let mainWindow;
 
+const fs = require('fs');
+
 function createWindow() {
   mainWindow = new BrowserWindow({
     width: 1280,
     height: 800,
+    backgroundColor: '#0a0f18',
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
       nodeIntegration: false,
@@ -34,8 +37,27 @@ function createWindow() {
     mainWindow.webContents.openDevTools();
   } else {
     // In production, load the built React app
-    mainWindow.loadFile(path.join(__dirname, '../client/dist/index.html'));
+    const distPath = path.join(__dirname, '../client/dist/index.html');
+    if (!fs.existsSync(distPath)) {
+      console.error(`\n[FATAL] client/dist/index.html not found! Run "npm run build --prefix client" first.\n`);
+    }
+    mainWindow.loadFile(distPath).catch(err => {
+      console.error("Failed to load dist/index.html:", err);
+      mainWindow.webContents.openDevTools();
+    });
   }
+
+  // Allow F12 or Ctrl+Shift+I to toggle DevTools for instant diagnostics
+  mainWindow.webContents.on('before-input-event', (event, input) => {
+    if (input.key === 'F12' || (input.control && input.shift && input.key.toLowerCase() === 'i')) {
+      mainWindow.webContents.toggleDevTools();
+    }
+  });
+
+  mainWindow.webContents.on('did-fail-load', (event, errorCode, errorDescription) => {
+    console.error(`Page failed to load [${errorCode}]: ${errorDescription}`);
+    mainWindow.webContents.openDevTools();
+  });
 
   mainWindow.on('closed', () => {
     mainWindow = null;
