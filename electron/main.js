@@ -64,7 +64,43 @@ function createWindow() {
   });
 }
 
+// Start local TCP video stream server for DJI live feed from Android bridge
+const net = require('net');
+let videoServer = null;
+
+function startVideoStreamServer() {
+  if (videoServer) return;
+  try {
+    videoServer = net.createServer((socket) => {
+      socket.setNoDelay(true);
+      console.log(`[VIDEO] Drone live camera stream connected from: ${socket.remoteAddress}`);
+      socket.on('data', (chunk) => {
+        if (mainWindow && !mainWindow.isDestroyed()) {
+          mainWindow.webContents.send('drone-video-chunk', chunk);
+        }
+      });
+      socket.on('error', (err) => {
+        console.log(`[VIDEO] Socket error: ${err.message}`);
+      });
+      socket.on('close', () => {
+        console.log('[VIDEO] Drone video stream disconnected');
+      });
+    });
+
+    videoServer.on('error', (err) => {
+      console.error(`[VIDEO] Video server error: ${err.message}`);
+    });
+
+    videoServer.listen(14555, '0.0.0.0', () => {
+      console.log('[VIDEO] Live Drone Video Stream receiver listening on port 14555');
+    });
+  } catch (err) {
+    console.error('[VIDEO] Failed to initialize video stream server:', err);
+  }
+}
+
 app.whenReady().then(() => {
+  startVideoStreamServer();
   protocol.handle('maptile', (request) => {
     try {
       const url = new URL(request.url);

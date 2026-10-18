@@ -182,12 +182,15 @@ public final class BridgeController {
     }
     public void start(Destination target) throws Exception {
         exporter.start(target);
+        VideoStreamer.getInstance().start(target.host, 14555);
         udp = "STARTED, waiting for aircraft samples";
         lastSendState = "";
         Diagnostics.record("UDP started via " + exporter.route()); notifyObservers();
     }
     public void stop() {
-        exporter.stop(); udp = "STOPPED";
+        exporter.stop();
+        VideoStreamer.getInstance().stop();
+        udp = "STOPPED";
         Diagnostics.record("UDP stopped"); notifyObservers();
     }
     public String diagnosticReport() {

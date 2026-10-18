@@ -54,6 +54,12 @@
     animation: pulse 2s infinite;
 }
 
+.live-badge.live-stream {
+    background-color: rgba(0, 180, 216, 0.95);
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.7);
+    animation: pulse 1.5s infinite;
+}
+
 .live-badge.standby {
     background-color: rgba(113, 128, 150, 0.7);
 }

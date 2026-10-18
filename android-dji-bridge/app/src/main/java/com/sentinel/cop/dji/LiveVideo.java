@@ -26,6 +26,7 @@ final class LiveVideo implements TextureView.SurfaceTextureListener {
     private final VideoFeeder.VideoDataListener listener = (data, size) -> {
         DJICodecManager decoder = codec;
         if (decoder != null) decoder.sendDataToDecoder(data, size);
+        VideoStreamer.getInstance().sendFrame(data, size);
     };
 
     LiveVideo(Context context, TextView status) {

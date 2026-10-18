@@ -66,5 +66,10 @@ contextBridge.exposeInMainWorld(
         ipcRenderer.on('replay:status', listener);
         return () => ipcRenderer.removeListener('replay:status', listener);
     },
+    onDroneVideoChunk: (callback) => {
+        const listener = (_event, chunk) => callback(chunk);
+        ipcRenderer.on('drone-video-chunk', listener);
+        return () => ipcRenderer.removeListener('drone-video-chunk', listener);
+    },
   }
 );
