@@ -79,6 +79,15 @@ public class MainActivity extends Activity {
         }
         applyDroneConfig();
 
+        AdapterView.OnItemSelectedListener spinnerListener = new AdapterView.OnItemSelectedListener() {
+            @Override public void onItemSelected(AdapterView<?> parent, android.view.View view, int position, long id) {
+                applyDroneConfig();
+            }
+            @Override public void onNothingSelected(AdapterView<?> parent) {}
+        };
+        callsignSpinner.setOnItemSelectedListener(spinnerListener);
+        modelSpinner.setOnItemSelectedListener(spinnerListener);
+
         startButton.setOnClickListener(v -> toggle());
         testButton.setOnClickListener(v -> test());
         findViewById(R.id.register_button).setOnClickListener(v -> requestSdkPermissions());

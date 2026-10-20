@@ -4,7 +4,6 @@ import './SimulatorControls.css';
 const SimulatorControls = ({ onTelemetryUpdate, onStatusUpdate, setWaypoints }) => {
     const [status, setStatus] = useState('STOPPED');
     const [speed, setSpeed] = useState(1.0);
-    const [source, setSource] = useState('SIMULATOR');
     const [missions, setMissions] = useState([]);
     const [selectedMission, setSelectedMission] = useState('');
 
@@ -38,20 +37,6 @@ const SimulatorControls = ({ onTelemetryUpdate, onStatusUpdate, setWaypoints }) 
             window.electronAPI.resetSimulator();
             if (setWaypoints) setWaypoints([]); // Clear mission route from map
             setSelectedMission('');
-        }
-    };
-
-    const handleConnectMavlink = () => {
-        if (window.electronAPI) {
-            window.electronAPI.connectMavlink();
-            setSource('MAVLINK');
-        }
-    };
-
-    const handleDisconnectMavlink = () => {
-        if (window.electronAPI) {
-            window.electronAPI.disconnectMavlink();
-            setSource('SIMULATOR');
         }
     };
 

@@ -52,7 +52,9 @@ const SingleSensorFeed = ({
                         jmuxerRef.current.feed({
                             video: new Uint8Array(chunk)
                         });
-                    } catch (_) {}
+                    } catch {
+                        // ignore dropped frame during teardown
+                    }
                 }
             }, feedId);
         }
@@ -68,7 +70,9 @@ const SingleSensorFeed = ({
             if (unsubscribe) unsubscribe();
             clearInterval(watchdog);
             if (jmuxerRef.current) {
-                try { jmuxerRef.current.destroy(); } catch (_) {}
+                try { jmuxerRef.current.destroy(); } catch {
+                    // ignore teardown exception
+                }
             }
         };
     }, [feedId]);

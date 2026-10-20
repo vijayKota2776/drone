@@ -151,6 +151,7 @@ const OfflineMap = ({
                         const isFeed3 = p.platformId && (p.platformId.includes('3') || p.platformId.toLowerCase().includes('army'));
                         const isFeed2 = p.platformId && p.platformId.includes('2');
                         const markerColor = isFeed3 ? '#10b981' : (isFeed2 ? '#ed8936' : '#00f0ff');
+                        const isSelected = selectedPlatformId === p.platformId;
                         return (
                             <PlatformMarker 
                                 key={`marker-${p.platformId}`}
@@ -158,6 +159,7 @@ const OfflineMap = ({
                                 platformId={p.platformId}
                                 model={p.model || p.status?.model}
                                 color={markerColor}
+                                isSelected={isSelected}
                                 onSelect={onSelectPlatform}
                             />
                         );
@@ -166,6 +168,7 @@ const OfflineMap = ({
                     <PlatformMarker 
                         position={telemetry?.position} 
                         platformId={telemetry?.platformId} 
+                        isSelected={true}
                         onSelect={onSelectPlatform}
                     />
                 )}

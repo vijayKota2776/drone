@@ -24,9 +24,14 @@ public final class VideoStreamer {
     private VideoStreamer() {}
 
     public synchronized void start(String host, int port) {
+        if (running.get()) {
+            if (host != null && host.equals(targetHost) && port == targetPort) {
+                return;
+            }
+            stop();
+        }
         this.targetHost = host;
         this.targetPort = port;
-        if (running.get()) return;
         running.set(true);
         queue.clear();
         worker = new Thread(this::runLoop, "DJI-VideoStreamer");

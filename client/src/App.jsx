@@ -35,8 +35,12 @@ function App() {
   };
 
   useEffect(() => {
-    loadObservations();
+    let isMounted = true;
     if (window.electronAPI) {
+      window.electronAPI.getObservations().then((obs) => {
+        if (isMounted) setObservations(obs);
+      }).catch(console.error);
+
       const stopTelemetry = window.electronAPI.onTelemetry((data) => {
         const id = data.platformId || 'Rdr 1';
         setPlatforms((prev) => ({
@@ -354,6 +358,12 @@ function App() {
             (simStatus && (simStatus.startsWith('MAVLINK') || simStatus.startsWith('DJI') || simStatus === 'TELEMETRY_RESTORED') ? 'Connected (Awaiting GPS)' : 'Disconnected'))
           }</span>
         </div>
+        {appMode === 'REPLAY' && (
+          <div className="status-indicator">
+            <div className="status-dot"></div>
+            <span>Replay: {replayStatus}</span>
+          </div>
+        )}
       </footer>
     </div>
   );
