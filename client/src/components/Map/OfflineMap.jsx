@@ -50,17 +50,34 @@ const MapInteraction = ({ appMode, waypoints, setWaypoints, loadObservations, on
     return null;
 };
 
-const OfflineMap = ({ telemetry, appMode, waypoints = [], setWaypoints, observations = [], loadObservations, layers = {flightPath: true, observations: true, waypoints: true}, showGrid = false }) => {
+const OfflineMap = ({ 
+    telemetry, 
+    platforms = {}, 
+    selectedPlatformId, 
+    onSelectPlatform, 
+    appMode, 
+    waypoints = [], 
+    setWaypoints, 
+    observations = [], 
+    loadObservations, 
+    layers = {flightPath: true, observations: true, waypoints: true}, 
+    showGrid = false 
+}) => {
     const mapRef = useRef();
     const [cursorCoords, setCursorCoords] = useState(null);
 
-    // Pan map to follow drone if telemetry updates, but only if not planning
+    // Pan map to follow selected drone if telemetry updates, but only if not planning
     useEffect(() => {
         if (mapRef.current && hasPosition(telemetry?.position) && appMode !== 'PLANNING') {
             const map = mapRef.current;
             map.panTo([telemetry.position.latitude, telemetry.position.longitude], { animate: true });
         }
     }, [telemetry, appMode]);
+
+    // Active platform list (if multiple drones tracked, render all)
+    const activePlatforms = Object.keys(platforms).length > 0 
+        ? Object.values(platforms) 
+        : (telemetry && hasPosition(telemetry.position) ? [telemetry] : []);
 
     return (
         <div className={`offline-map-container ${showGrid ? 'show-tactical-grid' : ''}`}>
@@ -108,12 +125,40 @@ const OfflineMap = ({ telemetry, appMode, waypoints = [], setWaypoints, observat
                     <Marker key={`obs-${obs.id}`} position={[obs.latitude, obs.longitude]} />
                 ))}
 
-                {layers.flightPath && appMode !== 'PLANNING' && appMode !== 'OBSERVE' && <FlightTrack currentPosition={telemetry?.position} />}
+                {/* Multi-Drone Flight Paths */}
+                {layers.flightPath && appMode !== 'PLANNING' && appMode !== 'OBSERVE' && (
+                    activePlatforms.length > 0 ? (
+                        activePlatforms.map(p => (
+                            <FlightTrack 
+                                key={`track-${p.platformId}`} 
+                                currentPosition={p.position} 
+                                color={p.platformId && p.platformId.includes('2') ? '#ed8936' : '#00f0ff'}
+                            />
+                        ))
+                    ) : (
+                        <FlightTrack currentPosition={telemetry?.position} />
+                    )
+                )}
                 
-                <PlatformMarker 
-                    position={telemetry?.position} 
-                    platformId={telemetry?.platformId} 
-                />
+                {/* Multi-Drone Platform Markers */}
+                {activePlatforms.length > 0 ? (
+                    activePlatforms.map(p => (
+                        <PlatformMarker 
+                            key={`marker-${p.platformId}`}
+                            position={p.position} 
+                            platformId={p.platformId}
+                            model={p.model || p.status?.model}
+                            color={p.platformId && p.platformId.includes('2') ? '#ed8936' : '#00f0ff'}
+                            onSelect={onSelectPlatform}
+                        />
+                    ))
+                ) : (
+                    <PlatformMarker 
+                        position={telemetry?.position} 
+                        platformId={telemetry?.platformId} 
+                        onSelect={onSelectPlatform}
+                    />
+                )}
             </MapContainer>
 
             {/* Tactical MGRS / ESM Cursor Readout */}

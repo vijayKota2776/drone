@@ -66,10 +66,16 @@ contextBridge.exposeInMainWorld(
         ipcRenderer.on('replay:status', listener);
         return () => ipcRenderer.removeListener('replay:status', listener);
     },
-    onDroneVideoChunk: (callback) => {
+    onDroneVideoChunk: (callback, feedId = 1) => {
+        const primaryChannel = `drone-video-chunk-${feedId}`;
+        const legacyChannel = feedId === 1 ? 'drone-video-chunk' : null;
         const listener = (_event, chunk) => callback(chunk);
-        ipcRenderer.on('drone-video-chunk', listener);
-        return () => ipcRenderer.removeListener('drone-video-chunk', listener);
+        ipcRenderer.on(primaryChannel, listener);
+        if (legacyChannel) ipcRenderer.on(legacyChannel, listener);
+        return () => {
+            ipcRenderer.removeListener(primaryChannel, listener);
+            if (legacyChannel) ipcRenderer.removeListener(legacyChannel, listener);
+        };
     },
   }
 );

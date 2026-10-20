@@ -2,11 +2,14 @@ package com.sentinel.cop.dji.telemetry;
 
 public class TelemetryManager {
     private volatile int battery = -1;
+    public volatile String droneId = "Rdr 1";
+    public volatile String droneModel = "DJI Matrice 300 RTK";
     public void reset() { battery = -1; }
     public void updateBattery(int percentage) { battery = percentage >= 0 && percentage <= 100 ? percentage : -1; }
     public TelemetryData updateFlightState(FlightSnapshot state) {
         TelemetryData data = new TelemetryData();
-        data.drone_id = "DJI_AIRCRAFT";
+        data.drone_id = droneId;
+        data.drone_model = droneModel;
         data.timestamp = System.currentTimeMillis();
         data.relative_altitude_m = state.locationPresent ? state.takeoffHeight : Double.NaN;
         if (state.locationPresent) {

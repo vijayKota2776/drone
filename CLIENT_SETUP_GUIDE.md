@@ -135,6 +135,37 @@ For a real DJI build, omit `-PnetworkOnly` and supply `DJI_API_KEY` through the 
 
 Build the Windows package from repository root after tests: `npx electron-builder --win --dir`. The pinned SQLite and serial-port packages ship N-API prebuilds; unnecessary source rebuilds are disabled. Both source and packaged executable smoke tests exercise the shipped native modules. Native Electron packaging and installed-app startup should be checked separately from the frontend build.
 
+## 8. Multi-Drone & Dual-Feed Video Operations (DJI Matrice & Air 2S)
+
+Sentinel COP supports simultaneous multi-drone tracking and dual live camera feeds:
+
+### Architecture & Network Ports
+- **Telemetry UDP Port `14550`**: Receives concurrent telemetry streams from multiple drones. Each drone is identified by its unique callsign (`Rdr 1`, `Rdr 2`, etc.).
+- **Video Feed 1 (`Rdr 1`) TCP Port `14555`**: Dedicated live H.264 camera stream for Drone 1 (DJI Matrice 300 RTK / 350 RTK / Matrice 30).
+- **Video Feed 2 (`Rdr 2`) TCP Port `14556`**: Dedicated live H.264 camera stream for Drone 2 (DJI Air 2S).
+
+### Configuring Bridge App for Multi-Drone Deployment
+1. On **Phone 1 (e.g. for DJI Matrice 300 RTK)**:
+   - Select Callsign / Feed: **`Rdr 1`**
+   - Select Aircraft Model: **`DJI Matrice 300 RTK`**
+   - Destination Port: `14550`
+   - Press **START UDP**. Video automatically streams to desktop port `14555`.
+2. On **Phone 2 (e.g. for DJI Air 2S)**:
+   - Select Callsign / Feed: **`Rdr 2`**
+   - Select Aircraft Model: **`DJI Air 2S`**
+   - Destination Port: `14550`
+   - Press **START UDP**. Video automatically streams to desktop port `14556`.
+
+### Tactical Desktop COP Display
+- **Platform Panel (Fleet Overview)**: Displays all active UAVs in real time with Callsign, Drone Model type badge, battery level, GPS fix status, and coordinates. Clicking on any drone selects it for focused telemetry.
+- **Tactical Map**: Renders live positions, headings, and flight tracks for all active platforms simultaneously (Cyan for `Rdr 1`, Amber/Orange for `Rdr 2`).
+- **Sensor Video Station**:
+  - **DUAL SPLIT**: Both feeds (`Feed 1: Rdr 1` and `Feed 2: Rdr 2`) displayed together with independent live OSD overlays (Military Grid Reference System `GR`, LAT/LON, ALT, YAW, Speed).
+  - **Rdr 1 (Matrice)**: Fullscreen expanded view of Feed 1.
+  - **Rdr 2 (Air 2S)**: Fullscreen expanded view of Feed 2.
+  - **PIP (Picture-in-Picture)**: Primary view with interactive floating secondary thumbnail (click thumbnail to swap feeds instantly).
+- **Simulator Mode**: When running without physical aircraft, selecting Simulator starts a dual-UAV simulation where `Rdr 1` (DJI Matrice 300 RTK) and `Rdr 2` (DJI Air 2S) execute tactical sector patrols simultaneously.
+
 ## Verification limits
 
 Automated tests cover the real Java UDP sender/one-shot test, schema fixture shared with Node, no-fix/null handling, mid-flight altitude conversion, receiver parsing/ordering/timeouts/recovery, SQLite migration/recording/replay and display formatting. An APK build is not a hardware test. No code change can establish DJI key validity, the friend's phone/firmware/USB compatibility, DJI Fly coexistence, map availability or operational reliability without their bench evidence. The app uses DJI Mobile SDK V4 4.18, the final V4 release (adapted to Android 13 and 14; Air 2S is not supported by SDK V5). DJI has stated V4 will not support Android 15 or 16 KB memory-page devices, so prefer a phone on Android 10–14. Do not claim every Android phone is supported.

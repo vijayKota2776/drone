@@ -64,43 +64,53 @@ function createWindow() {
   });
 }
 
-// Start local TCP video stream server for DJI live feed from Android bridge
+// Start local TCP video stream servers for DJI live feeds from Android bridges (Feed 1 = 14555, Feed 2 = 14556)
 const net = require('net');
-let videoServer = null;
+let videoServer1 = null;
+let videoServer2 = null;
 
-function startVideoStreamServer() {
-  if (videoServer) return;
+function createVideoServer(port, feedId) {
   try {
-    videoServer = net.createServer((socket) => {
+    const server = net.createServer((socket) => {
       socket.setNoDelay(true);
-      console.log(`[VIDEO] Drone live camera stream connected from: ${socket.remoteAddress}`);
+      console.log(`[VIDEO Feed ${feedId}] Drone live camera stream connected from: ${socket.remoteAddress} on port ${port}`);
       socket.on('data', (chunk) => {
         if (mainWindow && !mainWindow.isDestroyed()) {
-          mainWindow.webContents.send('drone-video-chunk', chunk);
+          mainWindow.webContents.send(`drone-video-chunk-${feedId}`, chunk);
+          if (feedId === 1) {
+            mainWindow.webContents.send('drone-video-chunk', chunk); // backwards compatibility
+          }
         }
       });
       socket.on('error', (err) => {
-        console.log(`[VIDEO] Socket error: ${err.message}`);
+        console.log(`[VIDEO Feed ${feedId}] Socket error: ${err.message}`);
       });
       socket.on('close', () => {
-        console.log('[VIDEO] Drone video stream disconnected');
+        console.log(`[VIDEO Feed ${feedId}] Drone video stream disconnected`);
       });
     });
 
-    videoServer.on('error', (err) => {
-      console.error(`[VIDEO] Video server error: ${err.message}`);
+    server.on('error', (err) => {
+      console.error(`[VIDEO Feed ${feedId}] Video server error on port ${port}: ${err.message}`);
     });
 
-    videoServer.listen(14555, '0.0.0.0', () => {
-      console.log('[VIDEO] Live Drone Video Stream receiver listening on port 14555');
+    server.listen(port, '0.0.0.0', () => {
+      console.log(`[VIDEO Feed ${feedId}] Live Drone Video Stream receiver listening on port ${port}`);
     });
+    return server;
   } catch (err) {
-    console.error('[VIDEO] Failed to initialize video stream server:', err);
+    console.error(`[VIDEO Feed ${feedId}] Failed to initialize video stream server on port ${port}:`, err);
+    return null;
   }
 }
 
+function startVideoStreamServers() {
+  if (!videoServer1) videoServer1 = createVideoServer(14555, 1);
+  if (!videoServer2) videoServer2 = createVideoServer(14556, 2);
+}
+
 app.whenReady().then(() => {
-  startVideoStreamServer();
+  startVideoStreamServers();
   protocol.handle('maptile', (request) => {
     try {
       const url = new URL(request.url);

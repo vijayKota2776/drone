@@ -34,9 +34,15 @@ function normalizePacket(data) {
     const vz = optionalNumber(data.velocity_z_mps ?? data.velocityZ, 'velocity Z');
     const altitude = optionalNumber(data.altitude_m ?? data.altitude, 'altitude');
     if (modern && altitude !== null) throw new Error('V2 takeoff height cannot claim MSL altitude');
+    const model = (typeof data.drone_model === 'string' && data.drone_model)
+        ? data.drone_model
+        : ((typeof data.model === 'string' && data.model)
+            ? data.model
+            : (data.drone_id && data.drone_id.includes('2') ? 'DJI Air 2S' : 'DJI Matrice 300 RTK'));
     return {
         timestamp: data.timestamp ?? Date.now(),
         platformId: data.drone_id ?? 'DJI-UAV-01',
+        model,
         position: {
             latitude, longitude, valid,
             // V1's reference was ambiguous; retain the value for legacy files, label it explicitly.
@@ -58,7 +64,8 @@ function normalizePacket(data) {
             battery: optionalNumber(data.battery_percent ?? data.battery, 'battery', 0, 100),
             flightMode: data.flight_state ?? data.flightState ?? null,
             satellites, flying: data.flying ?? null, armed: null,
-            positionValid: valid, synthetic: modern ? data.synthetic : data.drone_id === 'TEST_DRONE'
+            positionValid: valid, synthetic: modern ? data.synthetic : data.drone_id === 'TEST_DRONE',
+            model
         }
     };
 }

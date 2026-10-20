@@ -1,36 +1,58 @@
 import React from 'react';
 import { Marker, Popup } from 'react-leaflet';
 import L from 'leaflet';
-import { hasPosition, formatNumber, altitudeLabel } from '../../telemetryDisplay';
+import { hasPosition, formatNumber, altitudeLabel, formatMGRS } from '../../telemetryDisplay';
 
-// Create a custom SVG drone icon
-const droneIcon = new L.DivIcon({
-  html: `
-    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-      <path d="M12 2L2 22L12 18L22 22L12 2Z" fill="#63b3ed" stroke="#ffffff" stroke-width="2" stroke-linejoin="round"/>
-    </svg>
-  `,
-  className: 'drone-marker',
-  iconSize: [24, 24],
-  iconAnchor: [12, 12], // Center of the SVG
-  popupAnchor: [0, -12]
+// Helper to create custom colored SVG drone icon with callsign label
+const createDroneIcon = (color = '#00f0ff', label = '') => new L.DivIcon({
+    html: `
+        <div style="position: relative; display: flex; flex-direction: column; align-items: center;">
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg" style="filter: drop-shadow(0 0 6px ${color});">
+                <path d="M12 2L2 22L12 18L22 22L12 2Z" fill="${color}" stroke="#ffffff" stroke-width="1.8" stroke-linejoin="round"/>
+            </svg>
+            ${label ? `<span style="background: rgba(10,15,24,0.9); color: ${color}; border: 1px solid ${color}; font-size: 10px; font-weight: 700; padding: 1px 4px; border-radius: 3px; margin-top: 2px; white-space: nowrap; font-family: monospace; box-shadow: 0 2px 4px rgba(0,0,0,0.5);">${label}</span>` : ''}
+        </div>
+    `,
+    className: 'drone-marker',
+    iconSize: [26, 36],
+    iconAnchor: [13, 13],
+    popupAnchor: [0, -14]
 });
 
-const PlatformMarker = ({ position, platformId }) => {
+const PlatformMarker = ({ position, platformId = 'Platform', model, color, onSelect }) => {
     if (!hasPosition(position)) {
         return null; // Don't render if no position
     }
 
+    const isFeed2 = platformId && platformId.includes('2');
+    const markerColor = color || (isFeed2 ? '#ed8936' : '#00f0ff');
+    const droneModel = model || (isFeed2 ? 'DJI Air 2S' : 'DJI Matrice 300 RTK');
+    const icon = createDroneIcon(markerColor, platformId);
+
     return (
         <Marker 
             position={[position.latitude, position.longitude]} 
-            icon={droneIcon}
+            icon={icon}
+            eventHandlers={{
+                click: () => {
+                    if (onSelect) onSelect(platformId);
+                }
+            }}
         >
             <Popup>
-                <strong>{platformId || 'Platform'}</strong><br/>
-                Lat: {formatNumber(position.latitude, 6)}<br/>
-                Lon: {formatNumber(position.longitude, 6)}<br/>
-                Alt: {altitudeLabel(position)}
+                <div style={{ fontFamily: 'Inter, sans-serif', color: '#1a202c', minWidth: '150px' }}>
+                    <strong style={{ color: markerColor === '#00f0ff' ? '#007799' : '#c05621', fontSize: '13px' }}>
+                        {platformId} [{droneModel}]
+                    </strong>
+                    <div style={{ marginTop: '4px', fontSize: '12px', lineHeight: '1.4' }}>
+                        <div><strong>Lat:</strong> {formatNumber(position.latitude, 6)}</div>
+                        <div><strong>Lon:</strong> {formatNumber(position.longitude, 6)}</div>
+                        <div><strong>Alt:</strong> {altitudeLabel(position)}</div>
+                        {position.gridReference && (
+                            <div><strong>GR:</strong> {formatMGRS(position.gridReference)}</div>
+                        )}
+                    </div>
+                </div>
             </Popup>
         </Marker>
     );

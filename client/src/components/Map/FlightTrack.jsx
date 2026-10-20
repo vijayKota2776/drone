@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { Polyline } from 'react-leaflet';
 import { hasPosition } from '../../telemetryDisplay';
 
-const FlightTrack = ({ currentPosition }) => {
+const FlightTrack = ({ currentPosition, color = '#fc8181' }) => {
     const [track, setTrack] = useState([]);
 
     useEffect(() => {
@@ -34,7 +34,7 @@ const FlightTrack = ({ currentPosition }) => {
     return (
         <Polyline 
             positions={track} 
-            color="#fc8181" 
+            color={color} 
             weight={3} 
             opacity={0.8}
             dashArray="5, 10" // Make it a dashed trail line

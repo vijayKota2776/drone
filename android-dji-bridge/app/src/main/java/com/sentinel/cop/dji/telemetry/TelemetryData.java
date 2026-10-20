@@ -2,6 +2,7 @@ package com.sentinel.cop.dji.telemetry;
 
 public class TelemetryData {
     public String drone_id;
+    public String drone_model;
     public long timestamp;
     public double lat;
     public double lon;

@@ -21,10 +21,19 @@ public class MainActivity extends Activity {
     private BridgeController controller;
     private TextView sdkText, aircraftText, udpText, telemetryText;
     private EditText ipInput, portInput;
+    private Spinner callsignSpinner, modelSpinner;
     private Button startButton, testButton;
     private LiveVideo video;
     private final Runnable refresh = this::render;
     private static final int PERMISSIONS = 100, EXPORT = 101;
+    private static final String[] CALLSIGNS = {"Rdr 1", "Rdr 2"};
+    private static final String[] MODELS = {
+        "DJI Matrice 300 RTK",
+        "DJI Matrice 350 RTK",
+        "DJI Matrice 30",
+        "DJI Air 2S",
+        "DJI Mavic 2 Enterprise"
+    };
 
     @Override public void onCreate(Bundle state) {
         super.onCreate(state);
@@ -36,6 +45,8 @@ public class MainActivity extends Activity {
         telemetryText = findViewById(R.id.telemetry_text);
         ipInput = findViewById(R.id.ip_input);
         portInput = findViewById(R.id.port_input);
+        callsignSpinner = findViewById(R.id.callsign_spinner);
+        modelSpinner = findViewById(R.id.model_spinner);
         startButton = findViewById(R.id.start_button);
         testButton = findViewById(R.id.test_button);
         TextureView videoView = findViewById(R.id.video_view);
@@ -49,6 +60,23 @@ public class MainActivity extends Activity {
         SharedPreferences settings = getSharedPreferences("bridge", MODE_PRIVATE);
         ipInput.setText(settings.getString("host", ""));
         portInput.setText(settings.getString("port", "14550"));
+
+        ArrayAdapter<String> callsignAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, CALLSIGNS);
+        callsignSpinner.setAdapter(callsignAdapter);
+        String savedCallsign = settings.getString("callsign", "Rdr 1");
+        callsignSpinner.setSelection("Rdr 2".equals(savedCallsign) ? 1 : 0);
+
+        ArrayAdapter<String> modelAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, MODELS);
+        modelSpinner.setAdapter(modelAdapter);
+        String savedModel = settings.getString("drone_model", "DJI Matrice 300 RTK");
+        for (int i = 0; i < MODELS.length; i++) {
+            if (MODELS[i].equals(savedModel)) {
+                modelSpinner.setSelection(i);
+                break;
+            }
+        }
+        applyDroneConfig();
+
         startButton.setOnClickListener(v -> toggle());
         testButton.setOnClickListener(v -> test());
         findViewById(R.id.register_button).setOnClickListener(v -> requestSdkPermissions());
@@ -59,6 +87,18 @@ public class MainActivity extends Activity {
         });
         if (!BuildConfig.NETWORK_ONLY) requestSdkPermissions();
         handleUsbIntent(getIntent());
+    }
+
+    private void applyDroneConfig() {
+        String callsign = callsignSpinner != null && callsignSpinner.getSelectedItem() != null 
+                ? callsignSpinner.getSelectedItem().toString() : "Rdr 1";
+        String model = modelSpinner != null && modelSpinner.getSelectedItem() != null 
+                ? modelSpinner.getSelectedItem().toString() : "DJI Matrice 300 RTK";
+        controller.setDroneConfig(callsign, model);
+        getSharedPreferences("bridge", MODE_PRIVATE).edit()
+                .putString("callsign", callsign)
+                .putString("drone_model", model)
+                .apply();
     }
     @Override protected void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
@@ -74,6 +114,7 @@ public class MainActivity extends Activity {
     @Override protected void onStart() { super.onStart(); controller.observe(refresh); }
     @Override protected void onStop() { controller.removeObserver(refresh); video.pause(); super.onStop(); }
     private Destination destination() {
+        applyDroneConfig();
         Destination target = Destination.parse(ipInput.getText().toString(), portInput.getText().toString());
         getSharedPreferences("bridge", MODE_PRIVATE).edit().putString("host", target.host)
                 .putString("port", String.valueOf(target.port)).apply();
@@ -114,6 +155,8 @@ public class MainActivity extends Activity {
         if (running) getWindow().addFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         else getWindow().clearFlags(WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON);
         ipInput.setEnabled(!running); portInput.setEnabled(!running);
+        if (callsignSpinner != null) callsignSpinner.setEnabled(!running);
+        if (modelSpinner != null) modelSpinner.setEnabled(!running);
         TelemetryData sample = controller.latest;
         if (sample == null) telemetryText.setText("No aircraft samples. Network test works without a drone.");
         else telemetryText.setText(String.format(Locale.US,

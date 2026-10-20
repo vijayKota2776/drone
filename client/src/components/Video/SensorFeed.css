@@ -1,14 +1,149 @@
-.sensor-feed-container {
+.multi-sensor-feed-root {
     width: 100%;
     height: 100%;
     display: flex;
-    justify-content: center;
+    flex-direction: column;
+    gap: 8px;
+}
+
+/* Tactical View Toolbar */
+.sensor-toolbar {
+    display: flex;
     align-items: center;
+    justify-content: space-between;
+    padding: 4px 6px;
+    background: rgba(13, 17, 23, 0.85);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 6px;
+}
+
+.sensor-mode-buttons {
+    display: flex;
+    gap: 6px;
+    width: 100%;
+}
+
+.mode-btn {
+    flex: 1;
+    background: rgba(255, 255, 255, 0.04);
+    color: #a0aec0;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 4px;
+    padding: 5px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    letter-spacing: 0.5px;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    text-align: center;
+}
+
+.mode-btn:hover {
+    background: rgba(99, 179, 237, 0.15);
+    color: #63b3ed;
+    border-color: rgba(99, 179, 237, 0.3);
+}
+
+.mode-btn.btn-active {
+    background: rgba(0, 240, 255, 0.15);
+    color: #00f0ff;
+    border-color: #00f0ff;
+    box-shadow: 0 0 10px rgba(0, 240, 255, 0.25);
+}
+
+/* Layout Containers */
+.sensor-feed-layout {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    overflow-y: auto;
     position: relative;
-    background-color: #050505;
+}
+
+.sensor-feed-layout.layout-dual {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    height: 100%;
+}
+
+.sensor-feed-layout.layout-feed_1,
+.sensor-feed-layout.layout-feed_2 {
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+/* Single Feed Card */
+.single-feed-card {
+    position: relative;
+    background: #080b11;
+    border: 1px solid rgba(99, 179, 237, 0.2);
     border-radius: 6px;
     overflow: hidden;
-    border: 1px solid rgba(72, 187, 120, 0.2);
+    display: flex;
+    flex-direction: column;
+    flex: 1;
+    min-height: 170px;
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+}
+
+.single-feed-card.feed-active {
+    border-color: rgba(0, 240, 255, 0.5);
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.2);
+}
+
+/* Feed Header Bar */
+.feed-header-bar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 4px 8px;
+    background: rgba(15, 23, 42, 0.9);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    font-size: 11px;
+    z-index: 5;
+}
+
+.feed-label-pill {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    color: #e2e8f0;
+    font-size: 11px;
+}
+
+.feed-indicator-dot {
+    width: 7px;
+    height: 7px;
+    border-radius: 50%;
+}
+
+.feed-indicator-dot.dot-live {
+    background-color: #00f0ff;
+    box-shadow: 0 0 6px #00f0ff;
+    animation: blink 1.2s infinite;
+}
+
+.feed-indicator-dot.dot-active {
+    background-color: #48bb78;
+    box-shadow: 0 0 6px #48bb78;
+}
+
+.feed-indicator-dot.dot-idle {
+    background-color: #718096;
+}
+
+/* Media wrapper */
+.feed-media-wrapper {
+    position: relative;
+    flex: 1;
+    width: 100%;
+    min-height: 130px;
+    background: #000;
+    overflow: hidden;
 }
 
 .sensor-video {
@@ -24,7 +159,7 @@
 .sensor-canvas {
     width: 100%;
     height: 100%;
-    object-fit: contain;
+    object-fit: fill;
     position: absolute;
     top: 0;
     left: 0;
@@ -32,26 +167,15 @@
     pointer-events: none;
 }
 
-.sensor-overlay-text {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    z-index: 10;
-}
-
+/* Status Badges */
 .live-badge {
     color: white;
-    font-size: 10px;
-    font-weight: bold;
-    padding: 3px 6px;
-    border-radius: 4px;
+    font-size: 9px;
+    font-weight: 700;
+    padding: 2px 6px;
+    border-radius: 3px;
     letter-spacing: 0.5px;
-}
-
-.live-badge.active {
-    background-color: rgba(56, 161, 105, 0.95);
-    box-shadow: 0 0 8px rgba(72, 187, 120, 0.5);
-    animation: pulse 2s infinite;
+    text-transform: uppercase;
 }
 
 .live-badge.live-stream {
@@ -60,12 +184,83 @@
     animation: pulse 1.5s infinite;
 }
 
+.live-badge.active-green {
+    background-color: rgba(56, 161, 105, 0.95);
+    box-shadow: 0 0 8px rgba(72, 187, 120, 0.5);
+}
+
+.live-badge.active-amber {
+    background-color: rgba(221, 107, 32, 0.95);
+    box-shadow: 0 0 8px rgba(237, 137, 54, 0.5);
+}
+
 .live-badge.standby {
-    background-color: rgba(113, 128, 150, 0.7);
+    background-color: rgba(74, 85, 104, 0.7);
+}
+
+/* Picture in Picture (PIP) */
+.pip-container {
+    position: relative;
+    width: 100%;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+}
+
+.pip-floating-box {
+    position: absolute;
+    bottom: 12px;
+    right: 12px;
+    width: 160px;
+    height: 110px;
+    z-index: 10;
+    cursor: pointer;
+    box-shadow: 0 8px 24px rgba(0, 0, 0, 0.8), 0 0 10px rgba(0, 240, 255, 0.4);
+    border: 2px solid #00f0ff;
+    border-radius: 6px;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.pip-floating-box:hover {
+    transform: scale(1.05);
+    box-shadow: 0 12px 30px rgba(0, 0, 0, 0.9), 0 0 16px rgba(0, 240, 255, 0.7);
+}
+
+.pip-floating-box .single-feed-card {
+    min-height: auto;
+    height: 100%;
+    border: none;
+    border-radius: 0;
+}
+
+.pip-floating-box .feed-header-bar {
+    padding: 2px 4px;
+    font-size: 8px;
+}
+
+.pip-swap-hint {
+    position: absolute;
+    bottom: 2px;
+    left: 0;
+    width: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    color: #00f0ff;
+    font-size: 8px;
+    font-weight: 700;
+    text-align: center;
+    padding: 2px 0;
+    pointer-events: none;
+    letter-spacing: 0.5px;
 }
 
 @keyframes pulse {
     0% { opacity: 1; }
     50% { opacity: 0.6; }
     100% { opacity: 1; }
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
 }

@@ -142,6 +142,7 @@ public class TelemetryUdpExporter {
         JSONObject json = new JSONObject();
         json.put("schema_version", 2);
         json.put("drone_id", d.drone_id);
+        if (d.drone_model != null) json.put("drone_model", d.drone_model);
         json.put("timestamp", d.timestamp);
         json.put("session_id", session);
         json.put("sequence", sequence);

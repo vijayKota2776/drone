@@ -11,6 +11,8 @@ import { formatNumber, altitudeLabel, formatMGRS } from './telemetryDisplay';
 function App() {
   const [appMode, setAppMode] = useState('LIVE'); // LIVE, REPLAY, PLANNING, OBSERVE
   const [telemetryState, setTelemetryState] = useState(null);
+  const [platforms, setPlatforms] = useState({});
+  const [selectedPlatformId, setSelectedPlatformId] = useState(null);
   const [simStatus, setSimStatus] = useState('STOPPED');
   const [replayStatus, setReplayStatus] = useState('REPLAY_STOPPED');
   const [isRecording, setIsRecording] = useState(false);
@@ -35,12 +37,25 @@ function App() {
     loadObservations();
     if (window.electronAPI) {
       const stopTelemetry = window.electronAPI.onTelemetry((data) => {
-        setTelemetryState(data);
+        const id = data.platformId || 'Rdr 1';
+        setPlatforms((prev) => ({
+          ...prev,
+          [id]: {
+            ...data,
+            lastSeen: Date.now()
+          }
+        }));
+        setTelemetryState((prev) => {
+          if (!selectedPlatformId || selectedPlatformId === id || !prev) {
+            return data;
+          }
+          return prev;
+        });
       });
       const stopStatus = window.electronAPI.onSimulatorStatus(setSimStatus);
       return () => { stopTelemetry(); stopStatus(); };
     }
-  }, []);
+  }, [selectedPlatformId]);
 
   const toggleRecording = async () => {
     if (!window.electronAPI) return;
@@ -137,9 +152,69 @@ function App() {
         <aside className="panel platform-panel">
           <h2>Platform Panel</h2>
           <div className="panel-content">
-            <ConnectionManager clearTelemetry={() => setTelemetryState(null)} status={simStatus} />
+            <ConnectionManager clearTelemetry={() => {
+              setTelemetryState(null);
+              setPlatforms({});
+              setSelectedPlatformId(null);
+            }} status={simStatus} />
+
+            {/* Multi-Drone Active Fleet List */}
+            {Object.keys(platforms).length > 0 && (
+              <div style={{ margin: '14px 0 10px 0', borderTop: '1px solid rgba(255, 255, 255, 0.08)', paddingTop: '10px' }}>
+                <div style={{ fontSize: '11px', textTransform: 'uppercase', color: '#63b3ed', fontWeight: 600, letterSpacing: '0.8px', marginBottom: '8px', display: 'flex', justifyContent: 'space-between' }}>
+                  <span>ACTIVE FLEET ({Object.keys(platforms).length})</span>
+                  <span style={{ color: '#48bb78' }}>ONLINE</span>
+                </div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                  {Object.entries(platforms).map(([id, plat]) => {
+                    const isSelected = (selectedPlatformId === id) || (!selectedPlatformId && id === (telemetryState?.platformId || 'Rdr 1'));
+                    const isFeed2 = id.includes('2');
+                    const themeColor = isFeed2 ? '#ed8936' : '#00f0ff';
+                    const droneModel = plat.model || plat.status?.model || (isFeed2 ? 'DJI Air 2S' : 'DJI Matrice 300 RTK');
+                    return (
+                      <div 
+                        key={id}
+                        onClick={() => {
+                          setSelectedPlatformId(id);
+                          setTelemetryState(plat);
+                        }}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '6px 10px',
+                          borderRadius: '4px',
+                          cursor: 'pointer',
+                          backgroundColor: isSelected ? 'rgba(0, 240, 255, 0.12)' : 'rgba(255, 255, 255, 0.03)',
+                          border: `1px solid ${isSelected ? themeColor : 'rgba(255, 255, 255, 0.08)'}`,
+                          boxShadow: isSelected ? `0 0 8px rgba(0, 240, 255, 0.2)` : 'none',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: themeColor, boxShadow: `0 0 6px ${themeColor}` }}></span>
+                          <div>
+                            <div style={{ fontWeight: 600, fontSize: '12px', color: '#ffffff' }}>{id}</div>
+                            <div style={{ fontSize: '10px', color: '#a0aec0' }}>{droneModel}</div>
+                          </div>
+                        </div>
+                        <div style={{ textAlign: 'right' }}>
+                          <div style={{ fontSize: '11px', fontWeight: 600, color: themeColor }}>
+                            {plat.status?.battery != null ? `${plat.status.battery}%` : '100%'}
+                          </div>
+                          <div style={{ fontSize: '9px', color: plat.position?.valid ? '#48bb78' : '#e53e3e' }}>
+                            {plat.position?.valid ? 'GPS FIX' : 'NO FIX'}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </div>
+            )}
             
             <div className="platform-stats">
+              <p>Platform: <strong style={{ color: (telemetryState?.platformId || selectedPlatformId || '').includes('2') ? '#ed8936' : '#00f0ff' }}>{telemetryState?.platformId || selectedPlatformId || 'Rdr 1'}</strong> [{telemetryState?.model || telemetryState?.status?.model || ((telemetryState?.platformId || selectedPlatformId || '').includes('2') ? 'DJI Air 2S' : 'DJI Matrice 300 RTK')}]</p>
               <p>Listener: {
                 ['UDP_LISTENER_ACTIVE', 'TELEMETRY_RECEIVED', 'TEST_TELEMETRY_RECEIVED', 'WAITING_FOR_GPS', 'TELEMETRY_LOST'].includes(simStatus) ? 'ACTIVE' :
                 simStatus === 'DISCONNECTED' || simStatus === 'STOPPED' ? 'INACTIVE' : 
@@ -174,6 +249,12 @@ function App() {
         <section className="panel map-area">
           <OfflineMap 
             telemetry={telemetryState} 
+            platforms={platforms}
+            selectedPlatformId={selectedPlatformId}
+            onSelectPlatform={(id) => {
+              setSelectedPlatformId(id);
+              if (platforms[id]) setTelemetryState(platforms[id]);
+            }}
             appMode={appMode}
             waypoints={waypoints}
             setWaypoints={setWaypoints}
@@ -186,7 +267,11 @@ function App() {
 
         <aside className="panel video-area">
           <h2>Sensor Video</h2>
-          <SensorFeed telemetry={telemetryState} />
+          <SensorFeed 
+            telemetry={telemetryState} 
+            platforms={platforms}
+            selectedPlatformId={selectedPlatformId}
+          />
         </aside>
 
         <section className="panel telemetry-area">
@@ -226,7 +311,7 @@ function App() {
             ))}
             <li>Application Started</li>
             <li>Database Initialized</li>
-            {simStatus === 'RUNNING' && <li>Simulator Started</li>}
+            {simStatus === 'RUNNING' && <li>Multi-UAV Simulator Started (Rdr 1 & Rdr 2)</li>}
           </ul>
         </section>
       </main>
@@ -241,13 +326,13 @@ function App() {
           <span>Database: {isRecording ? 'Recording...' : 'Connected (Idle)'}</span>
         </div>
         <div className="status-indicator">
-          <div className="status-dot error"></div>
-          <span>Video: None</span>
+          <div className="status-dot"></div>
+          <span>Video: Dual Feeds (Rdr 1 :14555 | Rdr 2 :14556)</span>
         </div>
         <div className="status-indicator">
           <div className={`status-dot ${simStatus === 'TELEMETRY_LOST' ? 'error' : (simStatus === 'RUNNING' || telemetryState || (simStatus && (simStatus.startsWith('MAVLINK') || simStatus.startsWith('DJI') || simStatus === 'TELEMETRY_RESTORED'))) ? '' : 'error'}`}></div>
           <span>Telemetry: {
-            simStatus === 'RUNNING' ? 'Connected (SIM)' : 
+            simStatus === 'RUNNING' ? 'Connected (SIM: Rdr 1 & Rdr 2)' : 
             simStatus === 'TELEMETRY_LOST' ? 'Lost (Timeout)' :
             simStatus === 'WAITING_FOR_GPS' ? 'Receiving (Awaiting GPS)' :
             simStatus === 'TEST_TELEMETRY_RECEIVED' ? 'Synthetic network test' :

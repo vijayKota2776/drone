@@ -24,10 +24,19 @@ public final class BridgeController {
     private final CopyOnWriteArraySet<Runnable> observers = new CopyOnWriteArraySet<>();
     public final TelemetryUdpExporter exporter = new TelemetryUdpExporter();
     private final TelemetryManager manager = new TelemetryManager();
+    public volatile String callsign = "Rdr 1";
+    public volatile String droneModel = "DJI Matrice 300 RTK";
     public volatile String sdk = BuildConfig.NETWORK_ONLY ? "NETWORK TEST ONLY (DJI disabled)" : "NOT REGISTERED";
     public volatile String aircraft = "DISCONNECTED";
     public volatile String udp = "STOPPED";
     public volatile TelemetryData latest;
+
+    public void setDroneConfig(String callsign, String droneModel) {
+        if (callsign != null && !callsign.trim().isEmpty()) this.callsign = callsign.trim();
+        if (droneModel != null && !droneModel.trim().isEmpty()) this.droneModel = droneModel.trim();
+        manager.droneId = this.callsign;
+        manager.droneModel = this.droneModel;
+    }
     private volatile boolean registering;
     private boolean pendingUsbAttach;
     private volatile FlightController boundFlightController;
@@ -181,11 +190,15 @@ public final class BridgeController {
         boundFlightController = null; boundBattery = null;
     }
     public void start(Destination target) throws Exception {
+        manager.droneId = this.callsign;
+        manager.droneModel = this.droneModel;
         exporter.start(target);
-        VideoStreamer.getInstance().start(target.host, 14555);
-        udp = "STARTED, waiting for aircraft samples";
+        int videoPort = ("Rdr 2".equalsIgnoreCase(callsign) || callsign.contains("2")) ? 14556 : 14555;
+        VideoStreamer.getInstance().start(target.host, videoPort);
+        udp = "STARTED (" + callsign + " -> Video :" + videoPort + "), waiting for aircraft";
         lastSendState = "";
-        Diagnostics.record("UDP started via " + exporter.route()); notifyObservers();
+        Diagnostics.record("UDP started for " + callsign + " [" + droneModel + "] via " + exporter.route() + " (Video port " + videoPort + ")");
+        notifyObservers();
     }
     public void stop() {
         exporter.stop();
