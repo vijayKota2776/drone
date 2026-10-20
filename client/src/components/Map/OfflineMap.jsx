@@ -86,8 +86,10 @@ const OfflineMap = ({
             </div>
             
             <MapContainer 
-                center={[18.9220, 72.8347]} // Gateway of India
-                zoom={16} 
+                center={[28.6000, 73.5000]} // Bikaner & Sri Ganganagar Tactical Region
+                zoom={10} 
+                minZoom={2}
+                maxZoom={18}
                 style={{ height: "100%", width: "100%", backgroundColor: "#0d0f14", cursor: appMode === 'PLANNING' ? 'crosshair' : 'grab' }}
                 zoomControl={true}
                 ref={mapRef}

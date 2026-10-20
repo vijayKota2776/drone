@@ -8,32 +8,32 @@ class SimulatorAdapter extends TelemetrySource {
         this.interval = null;
         this.updateRateMs = 1000; // 1Hz default
         
-        // Waypoints for Drone 1: Rdr 1 (DJI Matrice 300 RTK - Harbour Patrol Sector Alpha)
+        // Waypoints for Drone 1: Rdr 1 (DJI Matrice 300 RTK - Bikaner Nal AFS Sector Alpha)
         this.waypoints = [
-            { lat: 18.9220, lon: 72.8347 }, // A
-            { lat: 18.9230, lon: 72.8350 }, // B
-            { lat: 18.9235, lon: 72.8335 }, // C
-            { lat: 18.9225, lon: 72.8330 }, // D
+            { lat: 28.0708, lon: 73.2056 }, // Nal Air Force Station
+            { lat: 28.0820, lon: 73.2200 }, // North Approach
+            { lat: 28.0650, lon: 73.2350 }, // East Perimeter
+            { lat: 28.0550, lon: 73.2100 }, // South Corridor
         ];
         this.currentWaypointIndex = 0;
         this.currentPos = { ...this.waypoints[0] };
 
-        // Waypoints for Drone 2: Rdr 2 (DJI Air 2S - Coastal Recon Sector Bravo)
+        // Waypoints for Drone 2: Rdr 2 (DJI Air 2S - Suratgarh Air Station Sector Bravo)
         this.waypoints2 = [
-            { lat: 18.9205, lon: 72.8360 }, // E
-            { lat: 18.9218, lon: 72.8375 }, // F
-            { lat: 18.9202, lon: 72.8385 }, // G
-            { lat: 18.9190, lon: 72.8365 }, // H
+            { lat: 29.3236, lon: 73.9039 }, // Suratgarh Military Station
+            { lat: 29.3350, lon: 73.9180 }, // Forward Observation Point
+            { lat: 29.3180, lon: 73.9250 }, // East Patrol
+            { lat: 29.3100, lon: 73.9000 }, // Base Approach
         ];
         this.currentWaypointIndex2 = 0;
         this.currentPos2 = { ...this.waypoints2[0] };
 
-        // Waypoints for Drone 3: Rdr 3 (Army Indigenous Tactical UAV - Inland Defense Sector Charlie)
+        // Waypoints for Drone 3: Rdr 3 (Army Indigenous Tactical UAV - Anupgarh Border Sector Charlie)
         this.waypoints3 = [
-            { lat: 18.9245, lon: 72.8315 }, // J
-            { lat: 18.9255, lon: 72.8330 }, // K
-            { lat: 18.9248, lon: 72.8355 }, // L
-            { lat: 18.9238, lon: 72.8325 }, // M
+            { lat: 29.1911, lon: 73.2106 }, // Anupgarh Tactical Base
+            { lat: 29.2050, lon: 73.2300 }, // Border Surveillance Line
+            { lat: 29.1800, lon: 73.2450 }, // South Sector
+            { lat: 29.1750, lon: 73.2000 }, // Return Corridor
         ];
         this.currentWaypointIndex3 = 0;
         this.currentPos3 = { ...this.waypoints3[0] };

@@ -96,7 +96,18 @@ Public repositories permit reading, not pushing. A contributor without write acc
 
 ## 5. Offline maps, recording and replay
 
-The desktop uses a local `map.mbtiles`; without it, a fallback grid appears. A grid is not proof that geographical map data is installed. Use a compatible raster PNG MBTiles file that covers the location/zoom levels. The packaged app reads it from its user-data `data` folder, normally **`%APPDATA%\drone\data\map.mbtiles`** (verified Electron app name: `drone`; display name: Sentinel COP). Restart after adding the file. The SQLite flight database is in the same folder. When updating a source checkout, existing database/WAL/map files are copied there only if the destination is absent; originals are preserved. Close the old app before upgrading.
+The desktop COP features an in-depth, completely offline satellite map database (**`data/map.mbtiles`**, 84.5 MB) tailored specifically for operational sectors in Western Command / South Western Command:
+
+### Offline Map Tile Hierarchy:
+- **World Base ("Baki Normal")**: Zoom levels 1–4 (complete global coverage).
+- **India National Overview ("Baki Normal")**: Zoom levels 5–7 (all states, international borders, and coastline).
+- **Regional North-West / Rajasthan**: Zoom levels 8–9 (tactical situational awareness connecting border corridors).
+- **Full In-Depth Coverage — Bikaner & Sri Ganganagar Districts**:
+  - **Zoom 10–12**: Continuous high-resolution satellite coverage across the entire geographic boundaries of both **Bikaner District** and **Sri Ganganagar District** (Lat 27.2°–30.2° N, Lon 71.9°–74.3° E).
+  - **Zoom 13–15**: In-depth tactical corridors around 21 key hubs and border sectors (Bikaner City, Junagarh, Nal Air Force Station, Mahajan Field Firing Range, Khajuwala, Kolayat, Lunkaransar, Bajju, Chhattargarh, Nokha, Deshnoke, Sri Ganganagar City/Cantt, Suratgarh AFS & Army Base, Anupgarh, Raisinghnagar, Sri Karanpur, Gharsana, Rawla Mandi, Hindumalkot, Sadulshahar, Padampur, Vijaynagar).
+  - **Zoom 16–17**: Ultra high-resolution satellite imagery (runway-level, building-level, perimeter checkpoints) for primary military installations: Nal AFS, Suratgarh AFS, Mahajan Field Firing Range, Bikaner City, Sri Ganganagar Military Base, and Anupgarh / Khajuwala border sectors.
+
+The packaged app automatically reads the tiles from **`%APPDATA%\drone\data\map.mbtiles`** (Windows) or **`~/Library/Application Support/drone/data/map.mbtiles`** (macOS). Running `npm run map:download` will regenerate or update these in-depth tiles at any time.
 
 After real telemetry works, start recording, capture a short stationary session, stop recording and replay it. Check altitude reference, missing-GPS states and synthetic labels remain correct. Old recordings retain an explicit unknown/legacy altitude reference; the software cannot reconstruct a missing historical datum. The bridge schema is versioned and the desktop still accepts V1 packets, but labels their altitude reference unspecified.
 
