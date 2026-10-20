@@ -12,6 +12,7 @@
   "dependencies": {
     "jmuxer": "^2.1.4",
     "leaflet": "^1.9.4",
+    "mgrs": "^2.2.0",
     "react": "^19.2.8",
     "react-dom": "^19.2.8",
     "react-leaflet": "^5.0.0"

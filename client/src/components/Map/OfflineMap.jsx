@@ -1,11 +1,11 @@
-import React, { useEffect, useRef } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { MapContainer, TileLayer, Marker, Polyline, useMapEvents } from 'react-leaflet';
 import L from 'leaflet';
 import 'leaflet/dist/leaflet.css';
 import './OfflineMap.css';
 import PlatformMarker from './PlatformMarker';
 import FlightTrack from './FlightTrack';
-import { hasPosition } from '../../telemetryDisplay';
+import { hasPosition, latLonToGR } from '../../telemetryDisplay';
 
 import iconRetina from 'leaflet/dist/images/marker-icon-2x.png';
 import iconUrl from 'leaflet/dist/images/marker-icon.png';
@@ -22,21 +22,26 @@ L.Icon.Default.mergeOptions({
 // A simple base64 encoded SVG to create an infinite tactical grid
 const TACTICAL_GRID_TILE = "data:image/svg+xml;base64,PHN2ZyB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgeG1sbnM9Imh0dHA6Ly93d3cudzMub3JnLzIwMDAvc3ZnIj48cmVjdCB3aWR0aD0iMjU2IiBoZWlnaHQ9IjI1NiIgZmlsbD0iIzBkMGYxNCIgc3Ryb2tlPSIjMmQzNzQ4IiBzdHJva2Utd2lkdGg9IjEiLz48Y2lyY2xlIGN4PSIxMjgiIGN5PSIxMjgiIHI9IjIiIGZpbGw9IiM0YTU1NjgiLz48L3N2Zz4=";
 
-const MapInteraction = ({ appMode, waypoints, setWaypoints, loadObservations }) => {
+const MapInteraction = ({ appMode, waypoints, setWaypoints, loadObservations, onCursorMove }) => {
     useMapEvents({
+        mousemove(e) {
+            if (onCursorMove) {
+                onCursorMove({ lat: e.latlng.lat, lng: e.latlng.lng });
+            }
+        },
         async click(e) {
             if (appMode === 'PLANNING' && setWaypoints) {
                 const newWp = {
                     lat: e.latlng.lat,
                     lng: e.latlng.lng,
-                    gridReference: ''
+                    gridReference: latLonToGR(e.latlng.lat, e.latlng.lng)
                 };
                 setWaypoints([...(waypoints || []), newWp]);
             } else if (appMode === 'OBSERVE' && window.electronAPI) {
                 await window.electronAPI.saveObservation({
                     latitude: e.latlng.lat,
                     longitude: e.latlng.lng,
-                    gridReference: 'N/A' // Convert in real app
+                    gridReference: latLonToGR(e.latlng.lat, e.latlng.lng)
                 });
                 if (loadObservations) loadObservations();
             }
@@ -47,6 +52,7 @@ const MapInteraction = ({ appMode, waypoints, setWaypoints, loadObservations }) 
 
 const OfflineMap = ({ telemetry, appMode, waypoints = [], setWaypoints, observations = [], loadObservations, layers = {flightPath: true, observations: true, waypoints: true}, showGrid = false }) => {
     const mapRef = useRef();
+    const [cursorCoords, setCursorCoords] = useState(null);
 
     // Pan map to follow drone if telemetry updates, but only if not planning
     useEffect(() => {
@@ -80,7 +86,13 @@ const OfflineMap = ({ telemetry, appMode, waypoints = [], setWaypoints, observat
                     url="maptile://map/{z}/{x}/{y}.png"
                 />
 
-                <MapInteraction appMode={appMode} waypoints={waypoints} setWaypoints={setWaypoints} loadObservations={loadObservations} />
+                <MapInteraction 
+                    appMode={appMode} 
+                    waypoints={waypoints} 
+                    setWaypoints={setWaypoints} 
+                    loadObservations={loadObservations} 
+                    onCursorMove={setCursorCoords}
+                />
 
                 {/* Render Mission Waypoints */}
                 {layers.waypoints && waypoints.map((wp, i) => (
@@ -103,6 +115,15 @@ const OfflineMap = ({ telemetry, appMode, waypoints = [], setWaypoints, observat
                     platformId={telemetry?.platformId} 
                 />
             </MapContainer>
+
+            {/* Tactical MGRS / ESM Cursor Readout */}
+            <div className="tactical-cursor-readout">
+                <span className="cursor-label">CURSOR GR:</span>
+                <span className="cursor-value">{cursorCoords ? latLonToGR(cursorCoords.lat, cursorCoords.lng) : '--'}</span>
+                <span className="cursor-latlon">
+                    {cursorCoords ? `(${cursorCoords.lat.toFixed(5)}°, ${cursorCoords.lng.toFixed(5)}°)` : '(MOVE MOUSE OVER MAP)'}
+                </span>
+            </div>
         </div>
     );
 };

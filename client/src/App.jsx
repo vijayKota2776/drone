@@ -6,7 +6,7 @@ import SensorFeed from './components/Video/SensorFeed';
 import ReplayControls from './components/Replay/ReplayControls';
 import MissionPanel from './components/Mission/MissionPanel';
 import ConnectionManager from './components/Telemetry/ConnectionManager';
-import { formatNumber, altitudeLabel } from './telemetryDisplay';
+import { formatNumber, altitudeLabel, formatMGRS } from './telemetryDisplay';
 
 function App() {
   const [appMode, setAppMode] = useState('LIVE'); // LIVE, REPLAY, PLANNING, OBSERVE
@@ -160,7 +160,13 @@ function App() {
               <p>Altitude: {altitudeLabel(telemetryState?.position)}</p>
               {simStatus === 'TELEMETRY_LOST' && <p role="alert">STALE DATA — last received position shown.</p>}
               {telemetryState?.status?.synthetic && <p role="alert">SYNTHETIC TEST DATA</p>}
-              <p>Grid (ESM): {telemetryState?.position?.gridReference || '--'}</p>
+              <p>Grid (ESM / GR): <span style={{ fontWeight: 600, color: '#63b3ed' }}>
+                {telemetryState?.position?.gridReference
+                  ? formatMGRS(telemetryState.position.gridReference)
+                  : simStatus === 'WAITING_FOR_GPS'
+                    ? '-- (Awaiting outdoor GPS fix)'
+                    : '--'}
+              </span></p>
             </div>
           </div>
         </aside>

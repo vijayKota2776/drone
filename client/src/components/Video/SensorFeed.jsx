@@ -1,7 +1,7 @@
 import React, { useEffect, useRef, useState } from 'react';
 import JMuxer from 'jmuxer';
 import './SensorFeed.css';
-import { formatNumber, altitudeLabel } from '../../telemetryDisplay';
+import { formatNumber, altitudeLabel, formatMGRS } from '../../telemetryDisplay';
 
 const SensorFeed = ({ telemetry }) => {
     const canvasRef = useRef(null);
@@ -112,6 +112,8 @@ const SensorFeed = ({ telemetry }) => {
                 ctx.fillText(`LAT: ${formatNumber(telemetry.position.latitude, 6)}`, 10, 20);
                 ctx.fillText(`LON: ${formatNumber(telemetry.position.longitude, 6)}`, 10, 40);
                 ctx.fillText(`ALT: ${altitudeLabel(telemetry.position)}`, 10, 60);
+                const grVal = telemetry.position.gridReference ? formatMGRS(telemetry.position.gridReference) : '--';
+                ctx.fillText(`GR : ${grVal}`, 10, 80);
                 
                 ctx.fillText(`YAW: ${formatNumber(telemetry.attitude?.yaw)}°`, width - 90, 20);
                 ctx.fillText(`SPD: ${formatNumber(telemetry.velocity?.groundSpeed)}`, width - 90, 40);
