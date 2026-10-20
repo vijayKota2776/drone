@@ -24,9 +24,10 @@ const PlatformMarker = ({ position, platformId = 'Platform', model, color, onSel
         return null; // Don't render if no position
     }
 
+    const isFeed3 = platformId && (platformId.includes('3') || platformId.toLowerCase().includes('army'));
     const isFeed2 = platformId && platformId.includes('2');
-    const markerColor = color || (isFeed2 ? '#ed8936' : '#00f0ff');
-    const droneModel = model || (isFeed2 ? 'DJI Air 2S' : 'DJI Matrice 300 RTK');
+    const markerColor = color || (isFeed3 ? '#10b981' : (isFeed2 ? '#ed8936' : '#00f0ff'));
+    const droneModel = model || (isFeed3 ? 'Army Indigenous Tactical UAV' : (isFeed2 ? 'DJI Air 2S' : 'DJI Matrice 300 RTK'));
     const icon = createDroneIcon(markerColor, platformId);
 
     return (

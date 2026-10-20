@@ -64,10 +64,14 @@ function createWindow() {
   });
 }
 
-// Start local TCP video stream servers for DJI live feeds from Android bridges (Feed 1 = 14555, Feed 2 = 14556)
+// Start local TCP video stream servers for live feeds from bridges:
+// Feed 1 (14555) = Rdr 1 (DJI Matrice)
+// Feed 2 (14556) = Rdr 2 (DJI Air 2S)
+// Feed 3 (14557) = Rdr 3 (Army Made Drone)
 const net = require('net');
 let videoServer1 = null;
 let videoServer2 = null;
+let videoServer3 = null;
 
 function createVideoServer(port, feedId) {
   try {
@@ -107,6 +111,7 @@ function createVideoServer(port, feedId) {
 function startVideoStreamServers() {
   if (!videoServer1) videoServer1 = createVideoServer(14555, 1);
   if (!videoServer2) videoServer2 = createVideoServer(14556, 2);
+  if (!videoServer3) videoServer3 = createVideoServer(14557, 3);
 }
 
 app.whenReady().then(() => {

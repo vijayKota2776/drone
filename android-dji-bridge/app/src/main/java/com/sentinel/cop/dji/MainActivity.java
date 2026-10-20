@@ -26,12 +26,13 @@ public class MainActivity extends Activity {
     private LiveVideo video;
     private final Runnable refresh = this::render;
     private static final int PERMISSIONS = 100, EXPORT = 101;
-    private static final String[] CALLSIGNS = {"Rdr 1", "Rdr 2"};
+    private static final String[] CALLSIGNS = {"Rdr 1", "Rdr 2", "Rdr 3"};
     private static final String[] MODELS = {
         "DJI Matrice 300 RTK",
         "DJI Matrice 350 RTK",
         "DJI Matrice 30",
         "DJI Air 2S",
+        "Army Indigenous Tactical UAV",
         "DJI Mavic 2 Enterprise"
     };
 
@@ -64,7 +65,8 @@ public class MainActivity extends Activity {
         ArrayAdapter<String> callsignAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, CALLSIGNS);
         callsignSpinner.setAdapter(callsignAdapter);
         String savedCallsign = settings.getString("callsign", "Rdr 1");
-        callsignSpinner.setSelection("Rdr 2".equals(savedCallsign) ? 1 : 0);
+        int callsignIndex = "Rdr 3".equals(savedCallsign) ? 2 : ("Rdr 2".equals(savedCallsign) ? 1 : 0);
+        callsignSpinner.setSelection(callsignIndex);
 
         ArrayAdapter<String> modelAdapter = new ArrayAdapter<>(this, android.R.layout.simple_spinner_dropdown_item, MODELS);
         modelSpinner.setAdapter(modelAdapter);

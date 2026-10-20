@@ -38,7 +38,9 @@ function normalizePacket(data) {
         ? data.drone_model
         : ((typeof data.model === 'string' && data.model)
             ? data.model
-            : (data.drone_id && data.drone_id.includes('2') ? 'DJI Air 2S' : 'DJI Matrice 300 RTK'));
+            : (data.drone_id && (data.drone_id.includes('3') || data.drone_id.toLowerCase().includes('army'))
+                ? 'Army Indigenous Mil-UAV'
+                : (data.drone_id && data.drone_id.includes('2') ? 'DJI Air 2S' : 'DJI Matrice 300 RTK')));
     return {
         timestamp: data.timestamp ?? Date.now(),
         platformId: data.drone_id ?? 'DJI-UAV-01',

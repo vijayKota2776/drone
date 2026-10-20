@@ -135,36 +135,52 @@ For a real DJI build, omit `-PnetworkOnly` and supply `DJI_API_KEY` through the 
 
 Build the Windows package from repository root after tests: `npx electron-builder --win --dir`. The pinned SQLite and serial-port packages ship N-API prebuilds; unnecessary source rebuilds are disabled. Both source and packaged executable smoke tests exercise the shipped native modules. Native Electron packaging and installed-app startup should be checked separately from the frontend build.
 
-## 8. Multi-Drone & Dual-Feed Video Operations (DJI Matrice & Air 2S)
+## 8. Multi-Drone & Tri-Feed Video Operations (Rdr 1, Rdr 2, Rdr 3) with Dedicated Tactical Tables
 
-Sentinel COP supports simultaneous multi-drone tracking and dual live camera feeds:
+Sentinel COP supports simultaneous multi-drone tracking, tri-feed live camera displays, and dedicated real-time tactical comparison tables:
 
 ### Architecture & Network Ports
-- **Telemetry UDP Port `14550`**: Receives concurrent telemetry streams from multiple drones. Each drone is identified by its unique callsign (`Rdr 1`, `Rdr 2`, etc.).
-- **Video Feed 1 (`Rdr 1`) TCP Port `14555`**: Dedicated live H.264 camera stream for Drone 1 (DJI Matrice 300 RTK / 350 RTK / Matrice 30).
-- **Video Feed 2 (`Rdr 2`) TCP Port `14556`**: Dedicated live H.264 camera stream for Drone 2 (DJI Air 2S).
+- **Telemetry UDP Port `14550`**: Receives concurrent telemetry streams from multiple drones. Drones are differentiated by callsign (`Rdr 1`, `Rdr 2`, `Rdr 3`).
+- **Video Feed 1 (`Rdr 1`) TCP Port `14555`**: Dedicated live H.264 camera stream for Drone 1 (`DJI Matrice 300 RTK`).
+- **Video Feed 2 (`Rdr 2`) TCP Port `14556`**: Dedicated live H.264 camera stream for Drone 2 (`DJI Air 2S`).
+- **Video Feed 3 (`Rdr 3`) TCP Port `14557`**: Dedicated live H.264 camera stream for Drone 3 (`Army Indigenous Tactical UAV` / `Army Made Drone`).
 
-### Configuring Bridge App for Multi-Drone Deployment
-1. On **Phone 1 (e.g. for DJI Matrice 300 RTK)**:
-   - Select Callsign / Feed: **`Rdr 1`**
-   - Select Aircraft Model: **`DJI Matrice 300 RTK`**
-   - Destination Port: `14550`
-   - Press **START UDP**. Video automatically streams to desktop port `14555`.
-2. On **Phone 2 (e.g. for DJI Air 2S)**:
-   - Select Callsign / Feed: **`Rdr 2`**
-   - Select Aircraft Model: **`DJI Air 2S`**
-   - Destination Port: `14550`
-   - Press **START UDP**. Video automatically streams to desktop port `14556`.
+### Dedicated 3-Drone Telemetry Comparison Tables (`LAT`, `LONG`, `ALTI`, `ESM / GR`)
+A dedicated tactical telemetry comparison section renders 3 side-by-side cards comparing:
+- **`LAT`**: Latitude in decimal degrees (WGS84).
+- **`LONG`**: Longitude in decimal degrees (WGS84).
+- **`ALTI`**: Takeoff-relative height and MSL altitude.
+- **`ESM / GR`**: Electronic Support Measures / Military Grid Reference System (MGRS 10-digit spaced notation, e.g. `43Q BA 71953 93594`).
+- **Tactical Telemetry**: Live speed (m/s & km/h), yaw/heading with compass card, battery percentage with gauge bar, and GPS satellite fix status.
 
-### Tactical Desktop COP Display
-- **Platform Panel (Fleet Overview)**: Displays all active UAVs in real time with Callsign, Drone Model type badge, battery level, GPS fix status, and coordinates. Clicking on any drone selects it for focused telemetry.
-- **Tactical Map**: Renders live positions, headings, and flight tracks for all active platforms simultaneously (Cyan for `Rdr 1`, Amber/Orange for `Rdr 2`).
+### Configuring Bridge App for 3-Drone Deployment
+1. On **Phone / Device 1 (`DJI Matrice 300 RTK`)**:
+   - Callsign / Feed: **`Rdr 1`**
+   - Aircraft Model: **`DJI Matrice 300 RTK`**
+   - Destination Port: `14550`
+   - Press **START UDP**. Video automatically routes to desktop port `14555`.
+2. On **Phone / Device 2 (`DJI Air 2S`)**:
+   - Callsign / Feed: **`Rdr 2`**
+   - Aircraft Model: **`DJI Air 2S`**
+   - Destination Port: `14550`
+   - Press **START UDP**. Video automatically routes to desktop port `14556`.
+3. On **Phone / Device 3 (`Army Indigenous Tactical UAV`)**:
+   - Callsign / Feed: **`Rdr 3`**
+   - Aircraft Model: **`Army Indigenous Tactical UAV`**
+   - Destination Port: `14550`
+   - Press **START UDP**. Video automatically routes to desktop port `14557`.
+
+### Tactical Desktop COP Display Modes
+- **Tactical Telemetry Section**: 3 side-by-side live tactical tables for `Rdr 1`, `Rdr 2`, and `Rdr 3` displaying `LAT`, `LONG`, `ALTI`, and `ESM / GR`.
 - **Sensor Video Station**:
-  - **DUAL SPLIT**: Both feeds (`Feed 1: Rdr 1` and `Feed 2: Rdr 2`) displayed together with independent live OSD overlays (Military Grid Reference System `GR`, LAT/LON, ALT, YAW, Speed).
+  - **TRI GRID**: Displays all 3 feeds simultaneously (`Feed 1: Rdr 1`, `Feed 2: Rdr 2`, `Feed 3: Rdr 3`) with independent hardware/canvas decoders and live tactical HUD overlays.
+  - **DUAL SPLIT**: Feed 1 and Feed 2 side-by-side.
   - **Rdr 1 (Matrice)**: Fullscreen expanded view of Feed 1.
   - **Rdr 2 (Air 2S)**: Fullscreen expanded view of Feed 2.
-  - **PIP (Picture-in-Picture)**: Primary view with interactive floating secondary thumbnail (click thumbnail to swap feeds instantly).
-- **Simulator Mode**: When running without physical aircraft, selecting Simulator starts a dual-UAV simulation where `Rdr 1` (DJI Matrice 300 RTK) and `Rdr 2` (DJI Air 2S) execute tactical sector patrols simultaneously.
+  - **Rdr 3 (Army Drone)**: Fullscreen expanded view of Feed 3.
+  - **PIP (Picture-in-Picture)**: Primary view with floating interactive preview thumbnails.
+- **Tactical Map**: Live real-time synchronized plotting with distinct color-coding (Cyan for `Rdr 1`, Amber for `Rdr 2`, Emerald Green for `Rdr 3`).
+- **Simulator Mode**: Selecting Simulator in Hardware Connection launches a 3-UAV tactical simulation with `Rdr 1` (Sector Alpha), `Rdr 2` (Sector Bravo), and `Rdr 3` (Sector Charlie) running simultaneous reconnaissance patrols.
 
 ## Verification limits
 

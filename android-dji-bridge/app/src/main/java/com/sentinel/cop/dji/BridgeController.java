@@ -193,7 +193,8 @@ public final class BridgeController {
         manager.droneId = this.callsign;
         manager.droneModel = this.droneModel;
         exporter.start(target);
-        int videoPort = ("Rdr 2".equalsIgnoreCase(callsign) || callsign.contains("2")) ? 14556 : 14555;
+        int videoPort = ("Rdr 3".equalsIgnoreCase(callsign) || callsign.contains("3")) ? 14557
+                : ("Rdr 2".equalsIgnoreCase(callsign) || callsign.contains("2")) ? 14556 : 14555;
         VideoStreamer.getInstance().start(target.host, videoPort);
         udp = "STARTED (" + callsign + " -> Video :" + videoPort + "), waiting for aircraft";
         lastSendState = "";

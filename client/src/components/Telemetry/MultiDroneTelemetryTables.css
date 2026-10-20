@@ -1,0 +1,181 @@
+.multi-drone-tables-wrapper {
+    width: 100%;
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    margin-top: 10px;
+}
+
+.tables-header-bar {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 4px 8px;
+    background: rgba(15, 23, 42, 0.7);
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 4px;
+}
+
+.tables-header-title {
+    font-size: 11px;
+    font-weight: 700;
+    color: #63b3ed;
+    letter-spacing: 0.8px;
+}
+
+.tables-header-count {
+    font-size: 10px;
+    font-weight: 600;
+    color: #a0aec0;
+    background: rgba(255, 255, 255, 0.05);
+    padding: 2px 6px;
+    border-radius: 3px;
+}
+
+.three-tables-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+    width: 100%;
+}
+
+@media (max-width: 900px) {
+    .three-tables-grid {
+        grid-template-columns: 1fr;
+    }
+}
+
+/* Individual Table Card */
+.drone-table-card {
+    background: #090c13;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 6px;
+    overflow: hidden;
+    cursor: pointer;
+    transition: all 0.2s ease;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.4);
+}
+
+.drone-table-card:hover {
+    transform: translateY(-1px);
+    box-shadow: 0 6px 14px rgba(0, 0, 0, 0.6);
+}
+
+.drone-table-card.selected-drone-card {
+    box-shadow: 0 0 12px rgba(0, 240, 255, 0.25);
+}
+
+.card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 6px 10px;
+    background: rgba(17, 24, 39, 0.85);
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.card-title {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 12px;
+}
+
+.drone-dot {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+}
+
+.drone-model-pill {
+    font-size: 10px;
+    color: #a0aec0;
+    font-weight: 500;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    max-width: 140px;
+}
+
+.card-badge {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.status-pill {
+    font-size: 9px;
+    font-weight: 700;
+    padding: 1px 5px;
+    border-radius: 3px;
+    letter-spacing: 0.3px;
+}
+
+.status-pill.pill-fix {
+    background: rgba(16, 185, 129, 0.2);
+    color: #10b981;
+    border: 1px solid rgba(16, 185, 129, 0.4);
+}
+
+.status-pill.pill-nofix {
+    background: rgba(239, 68, 68, 0.2);
+    color: #ef4444;
+    border: 1px solid rgba(239, 68, 68, 0.4);
+}
+
+.battery-pill {
+    font-size: 10px;
+    font-weight: 700;
+}
+
+/* Grid Table */
+.telemetry-grid-table {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 11px;
+    font-family: monospace;
+}
+
+.telemetry-grid-table td {
+    padding: 4px 10px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.04);
+}
+
+.table-key {
+    color: #718096;
+    font-weight: 600;
+    width: 32%;
+    letter-spacing: 0.5px;
+}
+
+.table-val {
+    color: #e2e8f0;
+    text-align: right;
+    font-weight: 600;
+}
+
+.lat-val, .lon-val, .alt-val {
+    color: #cbd5e1;
+}
+
+.esm-row {
+    background: rgba(255, 255, 255, 0.02);
+}
+
+.esm-key {
+    color: #94a3b8;
+    font-weight: 700;
+}
+
+.esm-val {
+    font-weight: 700;
+    font-size: 11px;
+}
+
+.meta-row td {
+    border-bottom: none;
+    font-size: 10px;
+    color: #64748b;
+    padding-top: 3px;
+    padding-bottom: 5px;
+}

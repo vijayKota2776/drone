@@ -23,7 +23,7 @@ const SingleSensorFeed = ({
     const [isLiveStream, setIsLiveStream] = useState(false);
     const lastLiveTimeRef = useRef(0);
 
-    // Initialize JMuxer for this specific feed (feedId 1 or 2)
+    // Initialize JMuxer for this specific feed (feedId 1, 2, or 3)
     useEffect(() => {
         if (!liveVideoRef.current) return;
 
@@ -89,8 +89,13 @@ const SingleSensorFeed = ({
         let time = 0;
 
         const isFeed2 = feedId === 2;
-        const themeColor = isLiveStream ? '#00f0ff' : (isFeed2 ? '#ed8936' : '#48bb78');
-        const themeColorAlpha = isLiveStream ? 'rgba(0, 240, 255, 0.9)' : (isFeed2 ? 'rgba(237, 137, 54, 0.85)' : 'rgba(72, 187, 120, 0.85)');
+        const isFeed3 = feedId === 3;
+        const themeColor = isLiveStream 
+            ? '#00f0ff' 
+            : (isFeed3 ? '#10b981' : (isFeed2 ? '#ed8936' : '#38bdf8'));
+        const themeColorAlpha = isLiveStream 
+            ? 'rgba(0, 240, 255, 0.9)' 
+            : (isFeed3 ? 'rgba(16, 185, 129, 0.85)' : (isFeed2 ? 'rgba(237, 137, 54, 0.85)' : 'rgba(56, 189, 248, 0.85)'));
 
         const render = () => {
             const width = canvas.width;
@@ -100,7 +105,7 @@ const SingleSensorFeed = ({
 
             // Radar scanning sweep line
             const scanLineY = (time % 120) / 120 * height;
-            ctx.fillStyle = isFeed2 ? 'rgba(237, 137, 54, 0.08)' : 'rgba(0, 240, 255, 0.08)';
+            ctx.fillStyle = isFeed3 ? 'rgba(16, 185, 129, 0.08)' : (isFeed2 ? 'rgba(237, 137, 54, 0.08)' : 'rgba(0, 240, 255, 0.08)');
             ctx.fillRect(0, scanLineY, width, 3);
 
             // Central crosshairs
@@ -110,11 +115,11 @@ const SingleSensorFeed = ({
             const cy = height / 2;
 
             ctx.beginPath();
-            ctx.moveTo(cx - 30, cy);
-            ctx.lineTo(cx + 30, cy);
-            ctx.moveTo(cx, cy - 30);
-            ctx.lineTo(cx, cy + 30);
-            ctx.arc(cx, cy, 22, 0, Math.PI * 2);
+            ctx.moveTo(cx - 28, cy);
+            ctx.lineTo(cx + 28, cy);
+            ctx.moveTo(cx, cy - 28);
+            ctx.lineTo(cx, cy + 28);
+            ctx.arc(cx, cy, 20, 0, Math.PI * 2);
             ctx.stroke();
 
             // Tactical OSD Text
@@ -129,11 +134,11 @@ const SingleSensorFeed = ({
             // Telemetry coordinates & MGRS
             ctx.fillStyle = themeColor;
             if (telemetry && telemetry.position) {
-                ctx.fillText(`LAT: ${formatNumber(telemetry.position.latitude, 5)}`, 8, 44);
-                ctx.fillText(`LON: ${formatNumber(telemetry.position.longitude, 5)}`, 8, 56);
-                ctx.fillText(`ALT: ${altitudeLabel(telemetry.position)}`, 8, 68);
+                ctx.fillText(`LAT: ${formatNumber(telemetry.position.latitude, 5)}`, 8, 42);
+                ctx.fillText(`LON: ${formatNumber(telemetry.position.longitude, 5)}`, 8, 54);
+                ctx.fillText(`ALT: ${altitudeLabel(telemetry.position)}`, 8, 66);
                 const grVal = telemetry.position.gridReference ? formatMGRS(telemetry.position.gridReference) : '--';
-                ctx.fillText(`GR : ${grVal}`, 8, 80);
+                ctx.fillText(`GR : ${grVal}`, 8, 78);
 
                 // Top Right: Attitude, Speed, Battery
                 ctx.textAlign = 'right';
@@ -144,7 +149,7 @@ const SingleSensorFeed = ({
                 }
                 ctx.textAlign = 'left';
             } else {
-                ctx.fillText("WAITING FOR TELEMETRY", 8, 44);
+                ctx.fillText("WAITING FOR TELEMETRY", 8, 42);
             }
 
             // Bottom bar: Source & UTC Clock
@@ -163,6 +168,7 @@ const SingleSensorFeed = ({
     }, [telemetry, isLiveStream, feedId, callsign, model, port]);
 
     const isFeed2 = feedId === 2;
+    const isFeed3 = feedId === 3;
     const isTelemetryActive = Boolean(telemetry && telemetry.position);
 
     let badgeText = `FEED ${feedId}: ${callsign} • STANDBY`;
@@ -172,7 +178,7 @@ const SingleSensorFeed = ({
         badgeClass = 'live-stream';
     } else if (isTelemetryActive) {
         badgeText = `FEED ${feedId}: ${callsign} • ACTIVE HUD`;
-        badgeClass = isFeed2 ? 'active-amber' : 'active-green';
+        badgeClass = isFeed3 ? 'active-green' : (isFeed2 ? 'active-amber' : 'active-cyan');
     }
 
     return (
@@ -214,7 +220,7 @@ const SingleSensorFeed = ({
                 <canvas 
                     ref={canvasRef} 
                     width={360} 
-                    height={200} 
+                    height={190} 
                     className="sensor-canvas"
                 />
             </div>
@@ -223,15 +229,15 @@ const SingleSensorFeed = ({
 };
 
 /**
- * Main SensorFeed component providing Dual Split, Rdr 1 full, Rdr 2 full, and PIP modes.
+ * Main SensorFeed component providing minimum 3 feed sections (Tri-Feed Grid, Rdr 1, Rdr 2, Rdr 3, PIP).
  */
 const SensorFeed = ({ telemetry, platforms = {}, selectedPlatformId }) => {
-    const [viewMode, setViewMode] = useState('DUAL'); // 'DUAL', 'FEED_1', 'FEED_2', 'PIP'
-    const [pipSwapped, setPipSwapped] = useState(false);
+    const [viewMode, setViewMode] = useState('TRI_GRID'); // 'TRI_GRID', 'FEED_1', 'FEED_2', 'FEED_3', 'PIP'
+    const [pipPrimary, setPipPrimary] = useState(1);
 
     // Extract Drone 1 (Rdr 1 - DJI Matrice 300 RTK)
     const drone1Data = platforms['Rdr 1'] 
-        || (telemetry?.platformId === 'Rdr 1' || (!telemetry?.platformId?.includes('2') && telemetry) ? telemetry : null);
+        || (telemetry?.platformId === 'Rdr 1' || (!telemetry?.platformId?.includes('2') && !telemetry?.platformId?.includes('3') && telemetry) ? telemetry : null);
     const drone1Model = drone1Data?.model || drone1Data?.status?.model || 'DJI Matrice 300 RTK';
 
     // Extract Drone 2 (Rdr 2 - DJI Air 2S)
@@ -239,17 +245,22 @@ const SensorFeed = ({ telemetry, platforms = {}, selectedPlatformId }) => {
         || (telemetry?.platformId === 'Rdr 2' || (telemetry?.platformId?.includes('2') && telemetry) ? telemetry : null);
     const drone2Model = drone2Data?.model || drone2Data?.status?.model || 'DJI Air 2S';
 
+    // Extract Drone 3 (Rdr 3 - Army Made Drone)
+    const drone3Data = platforms['Rdr 3'] 
+        || (telemetry?.platformId === 'Rdr 3' || (telemetry?.platformId?.includes('3') && telemetry) ? telemetry : null);
+    const drone3Model = drone3Data?.model || drone3Data?.status?.model || 'Army Indigenous Tactical UAV';
+
     return (
         <div className="multi-sensor-feed-root">
             {/* Tactical Feed Selector Toolbar */}
             <div className="sensor-toolbar">
                 <div className="sensor-mode-buttons">
                     <button 
-                        className={`mode-btn ${viewMode === 'DUAL' ? 'btn-active' : ''}`}
-                        onClick={() => setViewMode('DUAL')}
-                        title="Display both Feed 1 (Rdr 1) and Feed 2 (Rdr 2) in dual split screen"
+                        className={`mode-btn ${viewMode === 'TRI_GRID' ? 'btn-active' : ''}`}
+                        onClick={() => setViewMode('TRI_GRID')}
+                        title="Display all 3 feeds simultaneously (Rdr 1, Rdr 2, Rdr 3)"
                     >
-                        DUAL SPLIT
+                        3 FEEDS (ALL)
                     </button>
                     <button 
                         className={`mode-btn ${viewMode === 'FEED_1' ? 'btn-active' : ''}`}
@@ -266,6 +277,13 @@ const SensorFeed = ({ telemetry, platforms = {}, selectedPlatformId }) => {
                         Rdr 2 (Air 2S)
                     </button>
                     <button 
+                        className={`mode-btn ${viewMode === 'FEED_3' ? 'btn-active' : ''}`}
+                        onClick={() => setViewMode('FEED_3')}
+                        title="Fullscreen Feed 3: Rdr 3 (Army Made Drone)"
+                    >
+                        Rdr 3 (Army Drone)
+                    </button>
+                    <button 
                         className={`mode-btn ${viewMode === 'PIP' ? 'btn-active' : ''}`}
                         onClick={() => setViewMode('PIP')}
                         title="Picture-in-picture view"
@@ -277,8 +295,9 @@ const SensorFeed = ({ telemetry, platforms = {}, selectedPlatformId }) => {
 
             {/* Video Display Layouts */}
             <div className={`sensor-feed-layout layout-${viewMode.toLowerCase()}`}>
-                {viewMode === 'DUAL' && (
-                    <>
+                {viewMode === 'TRI_GRID' && (
+                    <div className="tri-feed-container">
+                        {/* Feed 1: Rdr 1 (DJI Matrice 300 RTK) */}
                         <SingleSensorFeed 
                             feedId={1}
                             callsign="Rdr 1"
@@ -287,6 +306,7 @@ const SensorFeed = ({ telemetry, platforms = {}, selectedPlatformId }) => {
                             port={14555}
                             isActive={selectedPlatformId === 'Rdr 1' || !selectedPlatformId}
                         />
+                        {/* Feed 2: Rdr 2 (DJI Air 2S) */}
                         <SingleSensorFeed 
                             feedId={2}
                             callsign="Rdr 2"
@@ -295,7 +315,16 @@ const SensorFeed = ({ telemetry, platforms = {}, selectedPlatformId }) => {
                             port={14556}
                             isActive={selectedPlatformId === 'Rdr 2'}
                         />
-                    </>
+                        {/* Feed 3: Rdr 3 (Army Made Drone) */}
+                        <SingleSensorFeed 
+                            feedId={3}
+                            callsign="Rdr 3"
+                            model={drone3Model}
+                            telemetry={drone3Data}
+                            port={14557}
+                            isActive={selectedPlatformId === 'Rdr 3'}
+                        />
+                    </div>
                 )}
 
                 {viewMode === 'FEED_1' && (
@@ -320,51 +349,49 @@ const SensorFeed = ({ telemetry, platforms = {}, selectedPlatformId }) => {
                     />
                 )}
 
+                {viewMode === 'FEED_3' && (
+                    <SingleSensorFeed 
+                        feedId={3}
+                        callsign="Rdr 3"
+                        model={drone3Model}
+                        telemetry={drone3Data}
+                        port={14557}
+                        isActive={true}
+                    />
+                )}
+
                 {viewMode === 'PIP' && (
                     <div className="pip-container">
                         {/* Main background feed */}
-                        {!pipSwapped ? (
-                            <SingleSensorFeed 
-                                feedId={1}
-                                callsign="Rdr 1"
-                                model={drone1Model}
-                                telemetry={drone1Data}
-                                port={14555}
-                                isActive={true}
-                            />
-                        ) : (
-                            <SingleSensorFeed 
-                                feedId={2}
-                                callsign="Rdr 2"
-                                model={drone2Model}
-                                telemetry={drone2Data}
-                                port={14556}
-                                isActive={true}
-                            />
-                        )}
+                        <SingleSensorFeed 
+                            feedId={pipPrimary}
+                            callsign={pipPrimary === 1 ? 'Rdr 1' : pipPrimary === 2 ? 'Rdr 2' : 'Rdr 3'}
+                            model={pipPrimary === 1 ? drone1Model : pipPrimary === 2 ? drone2Model : drone3Model}
+                            telemetry={pipPrimary === 1 ? drone1Data : pipPrimary === 2 ? drone2Data : drone3Data}
+                            port={pipPrimary === 1 ? 14555 : pipPrimary === 2 ? 14556 : 14557}
+                            isActive={true}
+                        />
 
-                        {/* Floating thumbnail feed (click to swap) */}
-                        <div className="pip-floating-box" onClick={() => setPipSwapped(!pipSwapped)} title="Click to swap feeds">
-                            {!pipSwapped ? (
-                                <SingleSensorFeed 
-                                    feedId={2}
-                                    callsign="Rdr 2"
-                                    model={drone2Model}
-                                    telemetry={drone2Data}
-                                    port={14556}
-                                    isPipThumbnail={true}
-                                />
-                            ) : (
-                                <SingleSensorFeed 
-                                    feedId={1}
-                                    callsign="Rdr 1"
-                                    model={drone1Model}
-                                    telemetry={drone1Data}
-                                    port={14555}
-                                    isPipThumbnail={true}
-                                />
-                            )}
-                            <div className="pip-swap-hint">CLICK TO SWAP</div>
+                        {/* Floating thumbnail feeds */}
+                        <div className="pip-thumbnails-stack">
+                            {[1, 2, 3].filter(id => id !== pipPrimary).map(thumbId => (
+                                <div 
+                                    key={`thumb-${thumbId}`} 
+                                    className="pip-floating-box" 
+                                    onClick={() => setPipPrimary(thumbId)} 
+                                    title={`Click to focus on Feed ${thumbId}`}
+                                >
+                                    <SingleSensorFeed 
+                                        feedId={thumbId}
+                                        callsign={thumbId === 1 ? 'Rdr 1' : thumbId === 2 ? 'Rdr 2' : 'Rdr 3'}
+                                        model={thumbId === 1 ? drone1Model : thumbId === 2 ? drone2Model : drone3Model}
+                                        telemetry={thumbId === 1 ? drone1Data : thumbId === 2 ? drone2Data : drone3Data}
+                                        port={thumbId === 1 ? 14555 : thumbId === 2 ? 14556 : 14557}
+                                        isPipThumbnail={true}
+                                    />
+                                    <div className="pip-swap-hint">SELECT FEED {thumbId}</div>
+                                </div>
+                            ))}
                         </div>
                     </div>
                 )}

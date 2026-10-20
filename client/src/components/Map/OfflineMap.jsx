@@ -128,13 +128,18 @@ const OfflineMap = ({
                 {/* Multi-Drone Flight Paths */}
                 {layers.flightPath && appMode !== 'PLANNING' && appMode !== 'OBSERVE' && (
                     activePlatforms.length > 0 ? (
-                        activePlatforms.map(p => (
-                            <FlightTrack 
-                                key={`track-${p.platformId}`} 
-                                currentPosition={p.position} 
-                                color={p.platformId && p.platformId.includes('2') ? '#ed8936' : '#00f0ff'}
-                            />
-                        ))
+                        activePlatforms.map(p => {
+                            const isFeed3 = p.platformId && (p.platformId.includes('3') || p.platformId.toLowerCase().includes('army'));
+                            const isFeed2 = p.platformId && p.platformId.includes('2');
+                            const trackColor = isFeed3 ? '#10b981' : (isFeed2 ? '#ed8936' : '#00f0ff');
+                            return (
+                                <FlightTrack 
+                                    key={`track-${p.platformId}`} 
+                                    currentPosition={p.position} 
+                                    color={trackColor}
+                                />
+                            );
+                        })
                     ) : (
                         <FlightTrack currentPosition={telemetry?.position} />
                     )
@@ -142,16 +147,21 @@ const OfflineMap = ({
                 
                 {/* Multi-Drone Platform Markers */}
                 {activePlatforms.length > 0 ? (
-                    activePlatforms.map(p => (
-                        <PlatformMarker 
-                            key={`marker-${p.platformId}`}
-                            position={p.position} 
-                            platformId={p.platformId}
-                            model={p.model || p.status?.model}
-                            color={p.platformId && p.platformId.includes('2') ? '#ed8936' : '#00f0ff'}
-                            onSelect={onSelectPlatform}
-                        />
-                    ))
+                    activePlatforms.map(p => {
+                        const isFeed3 = p.platformId && (p.platformId.includes('3') || p.platformId.toLowerCase().includes('army'));
+                        const isFeed2 = p.platformId && p.platformId.includes('2');
+                        const markerColor = isFeed3 ? '#10b981' : (isFeed2 ? '#ed8936' : '#00f0ff');
+                        return (
+                            <PlatformMarker 
+                                key={`marker-${p.platformId}`}
+                                position={p.position} 
+                                platformId={p.platformId}
+                                model={p.model || p.status?.model}
+                                color={markerColor}
+                                onSelect={onSelectPlatform}
+                            />
+                        );
+                    })
                 ) : (
                     <PlatformMarker 
                         position={telemetry?.position} 

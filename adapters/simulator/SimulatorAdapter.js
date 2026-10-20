@@ -28,10 +28,21 @@ class SimulatorAdapter extends TelemetrySource {
         this.currentWaypointIndex2 = 0;
         this.currentPos2 = { ...this.waypoints2[0] };
 
+        // Waypoints for Drone 3: Rdr 3 (Army Indigenous Tactical UAV - Inland Defense Sector Charlie)
+        this.waypoints3 = [
+            { lat: 18.9245, lon: 72.8315 }, // J
+            { lat: 18.9255, lon: 72.8330 }, // K
+            { lat: 18.9248, lon: 72.8355 }, // L
+            { lat: 18.9238, lon: 72.8325 }, // M
+        ];
+        this.currentWaypointIndex3 = 0;
+        this.currentPos3 = { ...this.waypoints3[0] };
+
         this.speedMultiplier = 1.0;
         this.stepSize = 0.0001; // Approx 10 meters per update
         this.battery1 = 88;
         this.battery2 = 76;
+        this.battery3 = 94;
     }
 
     loadWaypoints(newWaypoints) {
@@ -55,7 +66,7 @@ class SimulatorAdapter extends TelemetrySource {
         this.isRunning = true;
         this.isConnected = true;
         this.interval = setInterval(() => this._tick(), this.updateRateMs / this.speedMultiplier);
-        console.log('Multi-UAV Simulator started (Rdr 1: DJI Matrice 300 RTK & Rdr 2: DJI Air 2S)');
+        console.log('Multi-UAV Simulator started (Rdr 1: DJI Matrice 300 RTK | Rdr 2: DJI Air 2S | Rdr 3: Army Tactical UAV)');
         this.emitStatus('RUNNING');
     }
 
@@ -73,8 +84,11 @@ class SimulatorAdapter extends TelemetrySource {
         this.currentPos = { ...this.waypoints[0] };
         this.currentWaypointIndex2 = 0;
         this.currentPos2 = { ...this.waypoints2[0] };
+        this.currentWaypointIndex3 = 0;
+        this.currentPos3 = { ...this.waypoints3[0] };
         this.battery1 = 88;
         this.battery2 = 76;
+        this.battery3 = 94;
         this.isConnected = false;
         console.log('Simulator reset');
         this.emitStatus('STOPPED');
@@ -91,7 +105,7 @@ class SimulatorAdapter extends TelemetrySource {
     }
 
     _tick() {
-        // Step Drone 1 (Rdr 1)
+        // Step Drone 1 (Rdr 1 - DJI Matrice)
         const target1 = this.waypoints[(this.currentWaypointIndex + 1) % this.waypoints.length];
         const dLat1 = target1.lat - this.currentPos.lat;
         const dLon1 = target1.lon - this.currentPos.lon;
@@ -105,7 +119,7 @@ class SimulatorAdapter extends TelemetrySource {
             this.currentPos.lon += dLon1 * ratio1;
         }
 
-        // Step Drone 2 (Rdr 2)
+        // Step Drone 2 (Rdr 2 - DJI Air 2S)
         const target2 = this.waypoints2[(this.currentWaypointIndex2 + 1) % this.waypoints2.length];
         const dLat2 = target2.lat - this.currentPos2.lat;
         const dLon2 = target2.lon - this.currentPos2.lon;
@@ -117,6 +131,20 @@ class SimulatorAdapter extends TelemetrySource {
             const ratio2 = (this.stepSize * 1.1) / dist2;
             this.currentPos2.lat += dLat2 * ratio2;
             this.currentPos2.lon += dLon2 * ratio2;
+        }
+
+        // Step Drone 3 (Rdr 3 - Army Made Drone)
+        const target3 = this.waypoints3[(this.currentWaypointIndex3 + 1) % this.waypoints3.length];
+        const dLat3 = target3.lat - this.currentPos3.lat;
+        const dLon3 = target3.lon - this.currentPos3.lon;
+        const dist3 = Math.sqrt(dLat3 * dLat3 + dLon3 * dLon3);
+
+        if (dist3 < this.stepSize * 1.2) {
+            this.currentWaypointIndex3 = (this.currentWaypointIndex3 + 1) % this.waypoints3.length;
+        } else {
+            const ratio3 = (this.stepSize * 1.2) / dist3;
+            this.currentPos3.lat += dLat3 * ratio3;
+            this.currentPos3.lon += dLon3 * ratio3;
         }
 
         this._emitSimTelemetry();
@@ -188,6 +216,39 @@ class SimulatorAdapter extends TelemetrySource {
                 positionValid: true,
                 synthetic: false,
                 model: 'DJI Air 2S'
+            }
+        });
+
+        // 3. Telemetry for Feed 3 / Drone 3: Rdr 3 (Army Made Drone - Indigenous Mil-UAV)
+        this.emitTelemetry({
+            timestamp: now,
+            platformId: 'Rdr 3',
+            model: 'Army Indigenous Tactical UAV',
+            position: {
+                latitude: this.currentPos3.lat,
+                longitude: this.currentPos3.lon,
+                altitudeMSL: 155.0,
+                relativeAltitude: 155.0,
+                altitudeReference: 'takeoff',
+                valid: true,
+                gridReference: coordinateEngine.toMGRS(this.currentPos3.lat, this.currentPos3.lon)
+            },
+            attitude: {
+                roll: 0.8,
+                pitch: -1.0,
+                yaw: 220
+            },
+            velocity: {
+                groundSpeed: 21.0
+            },
+            status: {
+                armed: this.isRunning,
+                flightMode: 'TACTICAL_SURVEILLANCE',
+                battery: this.battery3,
+                satellites: 22,
+                positionValid: true,
+                synthetic: false,
+                model: 'Army Indigenous Tactical UAV'
             }
         });
     }
